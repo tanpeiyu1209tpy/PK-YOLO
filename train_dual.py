@@ -361,7 +361,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 single_cls=single_cls,
                                                 dataloader=val_loader,
                                                 save_dir=save_dir,
-                                                plots=False,
+                                                plots=True,
                                                 callbacks=callbacks,
                                                 compute_loss=compute_loss)
 
