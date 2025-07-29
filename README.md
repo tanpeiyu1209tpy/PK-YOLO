@@ -40,7 +40,7 @@ Kang, M., Ting, F.F., Phan, R.C.-W., Ting, C.-M., 2025. PK-YOLO: pretrained know
 <sup>**NOTE:** Day(s) Month Year, City, Abbrev. State, Country of Conference, Publiser, and Place of Publication are optional.</sup>
 
 - APA7 (Author–Date) Style</br>
-Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)* (pp. 3732–3741). IEEE. https://doi.org/10.1109/WACV56688.2025.00000</br>
+Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)* (pp. 3732–3741). IEEE. https://doi.org/10.1109/WACV61041.2025.00367</br>
 
 
 > BibTeX Format</br>
@@ -72,8 +72,8 @@ Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained k
   publisher = "IEEE",
   address = "Piscataway",
   year = "2025",
-  doi= "10.1109/WACV56688.2025.00000",
-  url = "https://doi.org/10.1109/WACV56688.2025.00000"
+  doi= "10.1109/WACV61041.2025.00367",
+  url = "https://doi.org/10.1109/WACV61041.2025.00367"
 }
 ```
 <sup>**NOTE:** Please remove some optional *BibTeX* fields/tags such as `series`, `volume`, `address`, `url`, and so on if the *LaTeX* compiler produces an error. Author names may be manually modified if not automatically abbreviated by the compiler under the control of the bibliography/reference style (i.e., .bst) file. The *BibTex* citation key may be `bib1`, `b1`, or `ref1` when references appear in numbered style in which they are cited. The quotation mark pair `""` in the field could be replaced by the brace `{}`, whereas the brace `{}` in the *BibTeX* field/tag `title` plays a role of keeping letters/characters/text original lower/uppercases or sentence/capitalized cases unchanged while using Springer Nature bibliography style files, for example, sn-nature.bst.</sup>
