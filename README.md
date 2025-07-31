@@ -3,9 +3,9 @@
     Less-to-More Generalization: Unlocking More Controllability by In-Context Generation
 </h3>
 <div style="display:flex;justify-content: center">
-<a href="https://bytedance.github.io/UNO/"><img alt="Build" src="https://img.shields.io/badge/Project%20Page-UNO-yellow"></a> 
-<a href="https://arxiv.org/abs/2410.21822"><img alt="Build" src="https://img.shields.io/badge/arXiv%20paper-2504.02160-b31b1b.svg"></a>
+<a href="https://arxiv.org/abs/2410.21822"><img alt="Build" src="https://img.shields.io/badge/arXiv%20paper-2410.21822-b31b1b.svg"></a>
 <a href="https://github.com/mkang315/PK-YOLO"><img src="https://img.shields.io/static/v1?label=GitHub&message=Code&color=green&logo=github"></a>
+<a href="https://huggingface.co/mkang315/PK-YOLO"><img alt="Build" src="https://img.shields.io/badge/v1?label=HuggingFace&message=Code&color=green&logo=huggingface"></a> 
 </div>
 
 This is the source code for the paper titled "PK-YOLO: Pretrained Knowledge Guided YOLO for Brain Tumor Detection in Multiplane MRI Slices" accepted by the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision ([WACV 2025](https://wacv2025.thecvf.com)), of which I am the first author. The paper is available to download from the [WACV 2025 open access provided by the Computer Vision Foundation](https://openaccess.thecvf.com/content/WACV2025/html/Kang_PK-YOLO_Pretrained_Knowledge_Guided_YOLO_for_Brain_Tumor_Detection_in_WACV_2025_paper.html) or [arXiv](https://arxiv.org/pdf/2410.21822). 
