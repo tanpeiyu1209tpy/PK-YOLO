@@ -2,7 +2,7 @@
 
 <div style="display:flex;justify-content: center">
 <a href="https://github.com/mkang315/PK-YOLO"><img alt="Build" src="https://img.shields.io/github/stars/mkang315/PK-YOLO"></a> 
-<a href="https://github.com/mkang315/PK-YOLO"><img src="https://img.shields.io/static/v1?label=GitHub&message=Code&color=grey&logo=github"></a>
+<a href="https://github.com/mkang315/PK-YOLO"><img src="https://img.shields.io/static/v1?label=GitHub&message=Code&color=black&logo=github"></a>
 <a href="https://huggingface.co/mkang315/PK-YOLO"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%97%20Hugging%20Face&message=Model&color=yellow"></a>
 <a href="https://arxiv.org/abs/2410.21822"><img alt="Build" src="https://img.shields.io/badge/arXiv%20paper-2410.21822-b31b1b.svg"></a>
 </div>
