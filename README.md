@@ -1,5 +1,4 @@
 # Official PK-YOLO
-</br>
 <div style="display:flex;justify-content: center">
 <a href="https://github.com/mkang315/PK-YOLO"><img src="https://img.shields.io/static/v1?label=GitHub&message=Code&color=black&logo=github"></a>
 <a href="https://github.com/mkang315/PK-YOLO"><img alt="Build" src="https://img.shields.io/github/stars/mkang315/PK-YOLO"></a> 
