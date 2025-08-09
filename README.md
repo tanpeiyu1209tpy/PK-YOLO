@@ -55,7 +55,7 @@ Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained k
 > BibTeX Format</br>
 ```
 \begin{thebibliography}{1}
-\bibitem{Kang25Pkyolo} M. Kang, F. F. Ting, R. C.-W. Phan, and C.-M. Ting, "Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices," in {\emph Proc. Winter Conf. Appl. Comput. Vis. (WACV)}, Tucson, AZ, USA, Feb. 28–Mar. 4, 2025, in press.
+\bibitem{Kang25Pkyolo} M. Kang, F. F. Ting, R. C.-W. Phan, and C.-M. Ting, "Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices," in {\emph Proc. Winter Conf. Appl. Comput. Vis. (WACV)}, Tucson, AZ, USA, Feb. 28--Mar. 4, 2025, pp. 3732--3741.
 \end{thebibliography}
 ```
 ```
