@@ -21,6 +21,11 @@ Install requirements.txt in a Python>=3.8.0 environment, including PyTorch>=1.7.
 ```
 pip install -r requirements.txt
 ```
+##### Training
+
+```
+python train_dual.py
+```
 
 ## Referencing Guide
 Please cite our paper if you use code from this repository. Here is a guide to referencing this work in various styles for formatting your references:
