@@ -7,7 +7,7 @@
 <a href="https://arxiv.org/abs/2410.21822"><img alt="Build" src="https://img.shields.io/badge/arXiv%20paper-2410.21822-b31b1b.svg"></a>
 </div>
 
-## Introduction
+## Description
 This is the source code for the paper titled "PK-YOLO: Pretrained Knowledge Guided YOLO for Brain Tumor Detection in Multiplane MRI Slices" accepted by the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision ([WACV 2025](https://wacv2025.thecvf.com)), of which I am the first author. The paper is available to download from the [WACV 2025 open access provided by the Computer Vision Foundation](https://openaccess.thecvf.com/content/WACV2025/html/Kang_PK-YOLO_Pretrained_Knowledge_Guided_YOLO_for_Brain_Tumor_Detection_in_WACV_2025_paper.html), [IEEE Xplore Proceedings](https://ieeexplore.ieee.org/document/10944003), or [arXiv](https://arxiv.org/pdf/2410.21822). 
 <!--
 submitted to WACV 2025 (Paper ID: 466). This repository will be private before final decisions released to authors, i.e., Oct 28th, 2024.
