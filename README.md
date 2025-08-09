@@ -28,7 +28,7 @@ python train_dual.py
 ```
 
 ## Referencing Guide
-Please cite our paper if you use code from this repository. Here is a guide to referencing this work in various styles for formatting your references:
+Please cite the paper if using this repository. Here is a guide to referencing this work in various styles for formatting your references:
 > Plain Text
 - IEEE Full Name Reference Style</br>
 Ming Kang, Fung Fung Ting, Raphaël C.-W. Phan, and Chee-Ming Ting. Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices. In *WACV*, pages 3732–3741, 2025.</br>
