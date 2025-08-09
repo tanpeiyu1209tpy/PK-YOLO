@@ -8,7 +8,7 @@
 </div>
 
 ## Introduction
-This is the source code for the paper titled "PK-YOLO: Pretrained Knowledge Guided YOLO for Brain Tumor Detection in Multiplane MRI Slices" accepted by the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision ([WACV 2025](https://wacv2025.thecvf.com)), of which I am the first author. The paper is available to download from the [WACV 2025 open access provided by the Computer Vision Foundation](https://openaccess.thecvf.com/content/WACV2025/html/Kang_PK-YOLO_Pretrained_Knowledge_Guided_YOLO_for_Brain_Tumor_Detection_in_WACV_2025_paper.html), [IEEE Xplore Proceedings](https://ieeexplore.ieee.org/document/10944003) or [arXiv](https://arxiv.org/pdf/2410.21822). 
+This is the source code for the paper titled "PK-YOLO: Pretrained Knowledge Guided YOLO for Brain Tumor Detection in Multiplane MRI Slices" accepted by the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision ([WACV 2025](https://wacv2025.thecvf.com)), of which I am the first author. The paper is available to download from the [WACV 2025 open access provided by the Computer Vision Foundation](https://openaccess.thecvf.com/content/WACV2025/html/Kang_PK-YOLO_Pretrained_Knowledge_Guided_YOLO_for_Brain_Tumor_Detection_in_WACV_2025_paper.html), [IEEE Xplore Proceedings](https://ieeexplore.ieee.org/document/10944003), or [arXiv](https://arxiv.org/pdf/2410.21822). 
 <!--
 submitted to WACV 2025 (Paper ID: 466). This repository will be private before final decisions released to authors, i.e., Oct 28th, 2024.
 ## Errata
@@ -91,4 +91,4 @@ Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained k
 PK-YOLO is released under the GNU General Public License v3.0. Please see the [LICENSE](https://github.com/mkang315/PK-YOLO/blob/main/LICENSE) file for more information.
 
 ## Copyright Notice
-Many utility codes of our project base on the codes of [YOLOv9](https://github.com/WongKinYiu/yolov9) and [SparK](https://github.com/keyu-tian/SparK) repositories.
+Many utility codes of our project base on the codes of [RepViT](https://github.com/THU-MIG/RepViT), [SparK](https://github.com/keyu-tian/SparK), and [YOLOv9](https://github.com/WongKinYiu/yolov9) repositories.
