@@ -28,11 +28,14 @@ python train_dual.py
 ```
 
 ## Referencing Guide
-Please cite the paper if using this repository. Here is a guide to referencing this work in various styles for formatting your references:
-> Plain Text
+Please cite the paper if using this repository. Here is a guide to referencing this work in various styles for formatting your references:</br>
+
+> Plain Text</br>
 - **IEEE Full Name Reference Style**</br>
 Ming Kang, Fung Fung Ting, Raphaël C.-W. Phan, and Chee-Ming Ting. Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices. In *WACV*, pages 3732–3741, 2025.</br>
-<sup>**NOTE:** This is a modification to the standard IEEE Reference Style and used by most IEEE/CVF conferences, including *CVPR*, *ICCV*, and *WACV*, to render first names in the bibliography as "Firstname Lastname" rather than "F. Lastname" or "Lastname, F.", which the reference styles of *NeurIPS*, *ICLR*, and *IJCAI* are similar to.</sup>
+<sup>**NOTE:** This is a modification to the standard IEEE Reference Style and used by most IEEE/CVF conferences, including *CVPR*, *ICCV*, and *WACV*, to render first names in the bibliography as "Firstname Lastname" rather than "F. Lastname" or "Lastname, F.".</sup></br>
+&nbsp;- **IJCAI Full Name Variation**</br>
+\[Kang *et al.*, 2025\] Ming Kang, Fung Fung Ting, Raphaël C.-W. Phan, and Chee-Ming Ting. Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision*, pages 3732–3741, Piscataway, NJ, February 2025. IEEE.</br>
 
 - **IEEE Reference Style**</br>
 M. Kang, F. F. Ting, R. C.-W. Phan, and C.-M. Ting, "Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices," in *Proc. Winter Conf. Appl. Comput. Vis. (WACV)*, Tucson, AZ, USA, Feb. 28–Mar. 4, 2025, pp. 3732–3741.</br>
@@ -43,7 +46,7 @@ Kang, M., Ting, C.-M., Ting, F. F. & Phan, R. C.-W. PK-YOLO: pretrained knowledg
 
 - **Springer Reference Style**</br>
 Kang, M., Ting, F.F., Phan, R.C.-W., Ting, C.-M.: PK-YOLO: pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slices. In: 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), pp. 3732–3741. IEEE, Piscataway (2025)</br>
-<sup>**NOTE:** MICCAI conference proceedings are part of the book series LNCS in which Springer's format for bibliographical references is strictly enforced. This is important, for instance, when citing previous MICCAI proceedings. LNCS stands for Lecture Notes in Computer Science.</sup>
+<sup>**NOTE:** *ECCV* and *MICCAI* conference proceedings are part of the book series LNCS in which Springer's format for bibliographical references is strictly enforced. LNCS stands for Lecture Notes in Computer Science.</sup>
 
 - **Elsevier Numbered Style**</br>
 M. Kang, F.F. Ting, R.C.-W. Phan, C.-M. Ting, PK-YOLO: pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slices, in: Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), 2025, pp. 3732–3741.</br>
@@ -55,7 +58,9 @@ Kang, M., Ting, F.F., Phan, R.C.-W., Ting, C.-M., 2025. PK-YOLO: pretrained know
 
 - **APA7 (Author–Date) Style**</br>
 Kang, M., Ting, F.F., Phan, R.C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)* (pp. 3732–3741). IEEE. https://doi.org/10.1109/WACV61041.2025.00367</br>
-
+&nbsp;- **ICML (Author–Date) Variation**</br>
+Kang, M., Ting, F.F., Phan, R.C.-W., and Ting, C.-M. PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)*, pp. 3732–3741, Piscataway, NJ, 2025. IEEE.</br>
+<sup>**NOTE:** For *NeurIPS* and *ICLR*, any reference/citation style is acceptable as long as it is used consistently.</sup>
 
 > BibTeX Format</br>
 ```
