@@ -29,7 +29,7 @@ Please cite the paper if using this repository. Here is a guide to referencing t
 > Plain Text</br>
 - **IEEE Full Name Reference Style**</br>
 Ming Kang, Fung Fung Ting, Raphaël C.-W. Phan, and Chee-Ming Ting. Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices. In *WACV*, pages 3732–3741, 2025.</br>
-<sup>**NOTE:** This is a modification to the standard IEEE Reference Style and used by most IEEE/CVF conferences, including *CVPR*, *ICCV*, and *WACV*, to render first names in the bibliography as "Firstname Lastname" rather than "F. Lastname" or "Lastname, F.".</sup></br>
+<sup>**NOTE:** This is a modification to the standard IEEE Reference Style and used by most IEEE/CVF conferences, including **CVPR**, **ICCV**, and **WACV**, to render first names in the bibliography as "Firstname Lastname" rather than "F. Lastname" or "Lastname, F.".</sup></br>
 &nbsp;- **IJCAI Full Name-Year Variation**</br>
 \[Kang *et al.*, 2025\] Ming Kang, Fung Fung Ting, Raphaël C.-W. Phan, and Chee-Ming Ting. Pk-yolo: Pretrained knowledge guided yolo for brain tumor detection in multiplane mri slices. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision*, pages 3732–3741, Piscataway, NJ, February 2025. IEEE.</br>
 &nbsp;- **ACL Full Name-Year Variation**</br>
@@ -64,7 +64,7 @@ Kang M, Ting FF, Phan RC-W, Ting C-M. PK-YOLO: pretrained knowledge guided YOLO 
 Kang, M., Ting, F. F., Phan, R. C.-W., & Ting, C.-M. (2025). PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)* (pp. 3732–3741). IEEE. https://doi.org/10.1109/WACV61041.2025.00367</br>
 &nbsp;- **ICML (Author–Year) Variation**</br>
 Kang, M., Ting, F. F., Phan, R. C.-W., and Ting, C.-M. PK-YOLO: Pretrained knowledge guided YOLO for brain tumor detection in multiplane MRI slice. In *Proceedings of the 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)*, pp. 3732–3741, Piscataway, NJ, 2025. IEEE.</br>
-<sup>**NOTE:** For *NeurIPS* and *ICLR*, any reference/citation style is acceptable as long as it is used consistently. The sample of references in Formatting Instructions For NeurIPS almost follows APA7 (author–date) style and that in Formatting Instructions For ICLR Conference Submissions is similar to IJCAI full name-year variation.</sup>
+<sup>**NOTE:** For **NeurIPS** and **ICLR**, any reference/citation style is acceptable as long as it is used consistently. The sample of references in Formatting Instructions For NeurIPS almost follows APA7 (author–date) style and that in Formatting Instructions For ICLR Conference Submissions is similar to IJCAI full name-year variation.</sup>
 
 > BibTeX Format</br>
 ```
