@@ -206,7 +206,7 @@ def de_parallel(model):
 
 
 def initialize_weights(model):
-    pretrained = torch.load("./spark_pretrain/V9back_1kpretrained_timm_style.pth")
+    pretrained = torch.load("/kaggle/input/pth-file/V9back_1kpretrained_timm_style.pth")
     counter = 0
     for k, v in pretrained.items():
         counter += 1

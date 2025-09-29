@@ -177,6 +177,7 @@ def run(
     jdict, stats, ap, ap_class = [], [], [], []
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
+    #val_loss_list = []
     for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
         callbacks.run('on_val_batch_start')
         with dt[0]:
@@ -193,9 +194,17 @@ def run(
 
         # Loss
         if compute_loss:
-            preds = preds[1]
-            #train_out = train_out[1]
-            #loss += compute_loss(train_out, targets)[1]  # box, obj, cls
+            preds, train_out = model(im)
+            _, loss_items = compute_loss(train_out, targets)
+            loss += loss_items
+        #    preds = preds[1]
+        #    train_out = train_out[1]
+        #    loss += compute_loss(train_out, targets)[1]  # box, obj, cls
+        #if compute_loss:
+        #    preds, train_out = preds
+        #    #preds = preds[1]
+        #    _, loss_items = compute_loss(preds, targets)
+        #    loss += loss_items  # box, cls, dfl
         else:
             preds = preds[0][1]
 
@@ -213,6 +222,11 @@ def run(
 
         # Metrics
         for si, pred in enumerate(preds):
+            #print(f"\n== Prediction output for image {si} ==")
+            #if pred is not None and len(pred) > 0:
+            #    print(pred[0])
+            #else:
+            #    print("No prediction")
             labels = targets[targets[:, 0] == si, 1:]
             nl, npr = labels.shape[0], pred.shape[0]  # number of labels, predictions
             path, shape = Path(paths[si]), shapes[si][0]
@@ -255,7 +269,6 @@ def run(
             plot_images(im, output_to_target(preds), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
 
         callbacks.run('on_val_batch_end', batch_i, im, targets, paths, shapes, preds)
-
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
@@ -329,7 +342,7 @@ def parse_opt():
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'runs/train/exp/weights/best.pt', help='model path(s)')
     parser.add_argument('--batch-size', type=int, default=32, help='batch size')
     parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.001, help='confidence threshold')
+    parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.4, help='NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=300, help='maximum detections per image')
     parser.add_argument('--task', default='val', help='train, val, test, speed or study')
@@ -391,4 +404,4 @@ def main(opt):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    main(opt)
+    main(opt) 
