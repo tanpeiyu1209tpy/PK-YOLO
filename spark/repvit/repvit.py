@@ -232,6 +232,20 @@ class RepViT(nn.Module):
                 #print(x.shape)
        # assert(len(outs) == 4)
         return outs
+    
+    def get_downsample_ratio(self):
+        """
+        返回骨干网络的总下采样率 (通常是 32)
+        """
+        return 32
+
+    def get_feature_map_channels(self):
+        """
+        返回骨干网络 __init__ 中定义的通道列表
+        (在 RepVit 中通常是 self.embed_dims)
+        """
+        # 你的 __init__ 函数中必须有一个名为 self.embed_dims 的列表
+        return self.embed_dims
 
 from timm.models import register_model
 def repvit_m1_1(pretrained=False, num_classes = 1000, distillation=False, init_cfg=None, out_indices=[], **kwargs):
