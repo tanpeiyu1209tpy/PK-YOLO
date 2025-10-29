@@ -8,7 +8,7 @@ import torch
 from timm import create_model
 from timm.loss import SoftTargetCrossEntropy
 from timm.layers import drop
-from models.repvit.repvit import repvit_m1_1, repvit_m1_5, repvit_m2_3
+from models.repvit import repvit_m1_1, repvit_m1_5, repvit_m2_3
 
 
 from models.convnext import ConvNeXt
