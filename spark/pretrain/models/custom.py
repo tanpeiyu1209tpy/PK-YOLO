@@ -11,11 +11,11 @@ from timm.models.registry import register_model
 import torch
 from torch import nn
 import sys
-from  HG.HGBlock import HGStem,HGBlock
-from  HG.block import DWConv
-from v9back.common import *
+#from  HG.HGBlock import HGStem,HGBlock
+#from  HG.block import DWConv
+#from v9back.common import *
 
-
+'''
 class YourConvNet(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -139,3 +139,4 @@ def convnet_test():
 
 if __name__ == '__main__':
     convnet_test()
+'''
