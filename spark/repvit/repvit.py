@@ -223,7 +223,7 @@ class RepViT(nn.Module):
         """Convert the model into training mode while keep layers freezed."""
         super(RepViT, self).train(mode)
 
-    def forward(self, x):
+    def forward(self, x, hierarchical=True):
         outs = []
         for i, f in enumerate(self.features):
             x = f(x)
@@ -232,7 +232,12 @@ class RepViT(nn.Module):
                 outs.append(x)
                 #print(x.shape)
        # assert(len(outs) == 4)
-        return outs
+
+        if hierarchical:
+            return outs  # Return the list of features
+        else:
+            return x     # Return only the final feature map
+        #return outs
     
     def get_downsample_ratio(self):
         """
