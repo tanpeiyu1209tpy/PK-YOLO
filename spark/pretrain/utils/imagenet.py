@@ -1,3 +1,4 @@
+'''
 # Copyright (c) ByteDance, Inc. and its affiliates.
 # All rights reserved.
 #
@@ -76,6 +77,74 @@ def build_dataset_to_pretrain(dataset_path, input_size) -> Dataset:
             dataset_path = dataset_path[:-len(postfix)]
     
     dataset_train = ImageNetDataset(imagenet_folder=dataset_path, transform=trans_train, train=True)
+    print_transform(trans_train, '[pre-train]')
+    return dataset_train
+
+
+def print_transform(transform, s):
+    print(f'Transform {s} = ')
+    for t in transform.transforms:
+        print(t)
+    print('---------------------------\n')
+'''
+
+import os
+from typing import Any, Callable
+import PIL.Image as PImage
+from torch.utils.data import Dataset
+from torchvision import transforms
+from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+
+try:
+    from torchvision.transforms import InterpolationMode
+    interpolation = InterpolationMode.BICUBIC
+except:
+    import PIL
+    interpolation = PIL.Image.BICUBIC
+
+
+def pil_loader(path):
+    with open(path, 'rb') as f:
+        img: PImage.Image = PImage.open(f).convert('RGB')
+    return img
+
+
+class CustomPretrainDataset(Dataset):
+    def __init__(self, dataset_folder: str, transform: Callable):
+        self.dataset_folder = dataset_folder
+        self.transform = transform
+
+        self.samples = []
+        for root, _, files in os.walk(dataset_folder):
+            for fname in files:
+                if fname.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                    self.samples.append(os.path.join(root, fname))
+
+        if len(self.samples) == 0:
+            raise RuntimeError(f"No images found in {dataset_folder}")
+
+        print(f"✅ Loaded {len(self.samples)} images from {dataset_folder}")
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index: int) -> Any:
+        img_path = self.samples[index]
+        img = pil_loader(img_path)
+        return self.transform(img)
+
+
+def build_dataset_to_pretrain(dataset_path, input_size):
+    trans_train = transforms.Compose([
+        transforms.RandomResizedCrop(input_size, scale=(0.67, 1.0), interpolation=interpolation),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+    ])
+
+    dataset_path = os.path.abspath(dataset_path)
+    dataset_train = CustomPretrainDataset(dataset_folder=dataset_path, transform=trans_train)
+
     print_transform(trans_train, '[pre-train]')
     return dataset_train
 
