@@ -192,6 +192,7 @@ class RepViT(nn.Module):
         super(RepViT, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs
+        self.embed_dims = [64, 128, 256, 512]
 
         # building first layer
         input_channel = self.cfgs[0][2]
