@@ -188,10 +188,17 @@ class BN_Linear(torch.nn.Sequential):
         return m
 
 class RepViT(nn.Module):
-    def __init__(self, cfgs, distillation=False, pretrained=None, init_cfg=None, out_indices=[]):
+    #def __init__(self, cfgs, distillation=False, pretrained=None, init_cfg=None, out_indices=[]):
+    #    super(RepViT, self).__init__()
+    #    # setting of inverted residual blocks
+    #    self.cfgs = cfgs
+
+    def __init__(self, cfgs, distillation=False, pretrained=None, init_cfg=None, out_indices=[],
+                 drop_path_rate=0.0, **kwargs):  # ✅ 加上这两个
         super(RepViT, self).__init__()
-        # setting of inverted residual blocks
+        self.drop_path_rate = drop_path_rate  # ✅ 保存下来，方便将来使用
         self.cfgs = cfgs
+
 
         # building first layer
         input_channel = self.cfgs[0][2]
