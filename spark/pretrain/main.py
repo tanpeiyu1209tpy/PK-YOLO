@@ -18,6 +18,11 @@ from torch.utils.data import DataLoader
 import dist
 import encoder
 from decoder import LightDecoder
+
+import sys
+sys.path.append('..') # 将父目录 'spark/' 添加到 Python 路径
+import repvit.repvit
+
 from models import build_sparse_encoder
 from sampler import DistInfiniteBatchSampler, worker_init_fn
 from spark import SparK
