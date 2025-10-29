@@ -249,6 +249,8 @@ class RepViT(nn.Module):
         return self.embed_dims
 
 from timm.models import register_model
+
+@register_model
 def repvit_m1_1(pretrained=False, num_classes = 1000, distillation=False, init_cfg=None, out_indices=[], **kwargs):
     """
     Constructs a MobileNetV3-Large model
