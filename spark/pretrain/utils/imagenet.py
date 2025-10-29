@@ -3,7 +3,7 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
+'''
 import os
 from typing import Any, Callable, Optional, Tuple
 
@@ -76,6 +76,81 @@ def build_dataset_to_pretrain(dataset_path, input_size) -> Dataset:
             dataset_path = dataset_path[:-len(postfix)]
     
     dataset_train = ImageNetDataset(imagenet_folder=dataset_path, transform=trans_train, train=True)
+    print_transform(trans_train, '[pre-train]')
+    return dataset_train
+
+
+def print_transform(transform, s):
+    print(f'Transform {s} = ')
+    for t in transform.transforms:
+        print(t)
+    print('---------------------------\n')
+    '''
+
+import os
+from typing import Any, Callable, Optional
+import PIL.Image as PImage
+from torch.utils.data import Dataset
+from torchvision import transforms
+from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+
+try:
+    from torchvision.transforms import InterpolationMode
+    interpolation = InterpolationMode.BICUBIC
+except:
+    import PIL
+    interpolation = PIL.Image.BICUBIC
+
+
+def pil_loader(path):
+    with open(path, 'rb') as f:
+        img: PImage.Image = PImage.open(f).convert('RGB')
+    return img
+
+
+# ✅ Custom dataset for self-supervised pretraining (no labels)
+class CustomPretrainDataset(Dataset):
+    def __init__(self, dataset_folder: str, transform: Callable):
+        self.dataset_folder = dataset_folder
+        self.transform = transform
+
+        # 获取所有图片路径
+        self.samples = []
+        for root, _, files in os.walk(dataset_folder):
+            for fname in files:
+                if fname.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                    self.samples.append(os.path.join(root, fname))
+
+        if len(self.samples) == 0:
+            raise RuntimeError(f"No images found in {dataset_folder}")
+
+        print(f"Loaded {len(self.samples)} images from {dataset_folder}")
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index: int) -> Any:
+        img_path = self.samples[index]
+        img = pil_loader(img_path)
+        return self.transform(img)
+
+
+def build_dataset_to_pretrain(dataset_path, input_size):
+    """
+    自监督 pretrain 数据加载函数
+    - dataset_path: 图片文件夹路径
+    - input_size: 模型输入分辨率
+    """
+    trans_train = transforms.Compose([
+        transforms.RandomResizedCrop(input_size, scale=(0.67, 1.0), interpolation=interpolation),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+    ])
+
+    dataset_path = os.path.abspath(dataset_path)
+    dataset_train = CustomPretrainDataset(dataset_folder=dataset_path, transform=trans_train)
+
     print_transform(trans_train, '[pre-train]')
     return dataset_train
 
