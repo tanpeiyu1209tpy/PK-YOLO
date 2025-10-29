@@ -12,7 +12,7 @@ from timm.layers import drop
 
 from models.convnext import ConvNeXt
 from models.resnet import ResNet
-from models.custom import YourConvNet
+#from models.custom import YourConvNet
 _import_resnets_for_timm_registration = (ResNet,)
 
 
