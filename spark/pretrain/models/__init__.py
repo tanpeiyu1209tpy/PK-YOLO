@@ -42,9 +42,6 @@ pretrain_default_model_kwargs = {
     'convnext_small': dict(sparse=True, drop_path_rate=0.2),
     'convnext_base': dict(sparse=True, drop_path_rate=0.3),
     'convnext_large': dict(sparse=True, drop_path_rate=0.4),
-    'repvit_m1_1': dict(),
-    'repvit_m1_5': dict(),
-    'repvit_m2_3': dict(),
 
 }
 for kw in pretrain_default_model_kwargs.values():
