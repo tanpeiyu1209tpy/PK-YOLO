@@ -8,6 +8,7 @@ import torch
 from timm import create_model
 from timm.loss import SoftTargetCrossEntropy
 from timm.layers import drop
+from models.repvit.repvit import repvit_m1_1, repvit_m1_5, repvit_m2_3
 
 
 from models.convnext import ConvNeXt
@@ -41,6 +42,9 @@ pretrain_default_model_kwargs = {
     'convnext_small': dict(sparse=True, drop_path_rate=0.2),
     'convnext_base': dict(sparse=True, drop_path_rate=0.3),
     'convnext_large': dict(sparse=True, drop_path_rate=0.4),
+    'repvit_m1_1': dict(drop_path_rate=0.1),
+    'repvit_m1_5': dict(drop_path_rate=0.15),
+    'repvit_m2_3': dict(drop_path_rate=0.2),
 
 }
 for kw in pretrain_default_model_kwargs.values():
