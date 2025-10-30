@@ -106,18 +106,45 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
     # Model
     check_suffix(weights, '.pt')  # check weights
-    pretrained = weights.endswith('.pt')
+    #pretrained = weights.endswith('.pt')
+    #if pretrained:
+    #    with torch_distributed_zero_first(LOCAL_RANK):
+    #        weights = attempt_download(weights)  # download if not found locally
+    #    ckpt = torch.load(weights, map_location='cpu', weights_only=False)
+    #    #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+    #    model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+    #    exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+    #    csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+    #    csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+    #    model.load_state_dict(csd, strict=False)  # load
+    #    LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+    
+    pretrained = weights.endswith('.pt') or weights.endswith('.pth')  # 支持 .pth
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
-            weights = attempt_download(weights)  # download if not found locally
+            weights = attempt_download(weights)
+
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
-        #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
-        model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-        model.load_state_dict(csd, strict=False)  # load
-        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+
+        # 判断 ckpt 是否为 SparK 风格（包含 'model' key）
+        if 'model' in ckpt:
+            state_dict = ckpt['model']
+            cfg_yaml = ckpt['model'].yaml if hasattr(ckpt['model'], 'yaml') else cfg
+        else:
+            state_dict = ckpt
+            cfg_yaml = cfg
+
+        model = Model(cfg_yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)
+
+        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []
+
+        # 转换为 float 并匹配 state_dict
+        csd = state_dict.float().state_dict() if hasattr(state_dict, 'float') else state_dict
+        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)
+
+        model.load_state_dict(csd, strict=False)
+        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')
+
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP

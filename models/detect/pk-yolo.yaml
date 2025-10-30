@@ -1,7 +1,7 @@
 # YOLOv9
 
 # parameters
-nc: 2  # number of classes
+nc: 3  # number of classes
 depth_multiple: 1.0  # model depth multiple
 width_multiple: 1.0  # layer channel multiple
 # activation: nn.LeakyReLU(0.1)
@@ -19,7 +19,7 @@ backbone:
    # conv down
    [1, 1, Down0, [64]], #2 320   1
    [1, 1, Down1, [128]], # 3  160   3
-    [1, 1, Down2, [256]],# 4  80    5
+    [1, 1, Down2, [256]], # 4  80    5
     [1, 1, Down3, [512]], #5    40  7
     [1, 1, Down4, [1024]], #6    20     9
 
