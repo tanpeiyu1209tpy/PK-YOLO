@@ -105,82 +105,27 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     is_coco = isinstance(val_path, str) and val_path.endswith('val2017.txt')  # COCO dataset
 
     # Model
-    check_suffix(weights, ['.pt', '.pth'])  # check weights
-    #pretrained = weights.endswith('.pt')
-    #if pretrained:
-    #    with torch_distributed_zero_first(LOCAL_RANK):
-    #        weights = attempt_download(weights)  # download if not found locally
-    #    ckpt = torch.load(weights, map_location='cpu', weights_only=False)
-    #    #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
-    #    model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-    #    exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-    #    csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-    #    csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-    #    model.load_state_dict(csd, strict=False)  # load
-    #    LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
-    
-    pretrained = weights.endswith('.pt') or weights.endswith('.pth')
+    check_suffix(weights, '.pt')  # check weights
+    pretrained = weights.endswith('.pt')
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
-            weights = attempt_download(weights)
-
+            weights = attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
-
-        # --- 1. 提取 state_dict ---
-        # 我们从调试中 100% 确定了权重在 'module' 键中
-        if 'module' in ckpt:
-            csd = ckpt['module']  # 这就是 state_dict 字典
-            cfg_yaml = cfg        # .pth 中没有 'model' 对象, 所以必须使用 opt.cfg
-        
-        elif 'model' in ckpt: # (备用) 处理 SparK 风格
-            state_dict_source = ckpt['model']
-            csd = state_dict_source.float().state_dict() if hasattr(state_dict_source, 'float') else state_dict_source
-            cfg_yaml = getattr(state_dict_source, 'yaml', cfg)
-        
-        else: # (备用) 假设 ckpt 本身就是 state_dict
-            csd = ckpt
-            cfg_yaml = cfg
-
-        model = Model(cfg_yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)
-        model_state_dict = model.state_dict()
-        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []
-
-        # --- 2. 修正：应用我们发现的 "替换" 规则 ---
-        LOGGER.info('Remapping checkpoint keys...')
-        new_csd = {}
-        
-        source_prefix = 'sparse_encoder.sp_cnn.'
-        target_prefix = 'model.1.backbone.'
-
-        for k, v in csd.items():
-            if k.startswith(source_prefix):
-                # 将 'sparse_encoder.sp_cnn.' 替换为 'model.1.backbone.'
-                new_key = target_prefix + k[len(source_prefix):]
-                
-                if new_key in model_state_dict:
-                    new_csd[new_key] = v
-                # else:
-                    # (调试) LOGGER.warning(f"Key mismatch: {k} -> {new_key} NOT IN MODEL")
-            # else:
-                # (调试) LOGGER.info(f"Skipping key (no prefix): {k}") 
-
-        # --- 3. 加载并报告 ---
-        if not new_csd:
-             LOGGER.warning('WARNING ⚠️ No keys were transferred. Check remapping logic.')
-
-        model.load_state_dict(new_csd, strict=False)
-        LOGGER.info(f'Transferred {len(new_csd)}/{len(model_state_dict)} items from {weights}')
-
+        #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+        model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+        model.load_state_dict(csd, strict=False)  # load
+        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-    #else:
-    #    model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
 
     # Freeze
     freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
     for k, v in model.named_parameters():
-        v.requires_grad = True  # train all layers TODO: uncomment this line as in master
+        # v.requires_grad = True  # train all layers TODO: uncomment this line as in master
         # v.register_hook(lambda x: torch.nan_to_num(x))  # NaN to 0 (commented for erratic training results)
         if any(x in k for x in freeze):
             LOGGER.info(f'freezing {k}')
