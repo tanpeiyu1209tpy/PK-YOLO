@@ -402,7 +402,7 @@ class Down(nn.Module):
         # 从硬编码的列表中获取“预期”的输入通道
         self.c_in = c_in_list[idx] 
         # 从 YAML 的 [32] 中获取“目标”的输出通道
-        self.c_out = c_out[0]      
+        self.c_out = c_out   
         self.idx = idx
         
         # 构建一个 1x1 卷积层来执行降维
