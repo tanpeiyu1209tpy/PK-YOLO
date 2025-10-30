@@ -126,50 +126,53 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
 
-        # --- 1. 修正：从 'module' 或 'model' 键中提取 state_dict ---
+        # --- 1. 提取 state_dict ---
+        # 我们从调试中 100% 确定了权重在 'module' 键中
         if 'module' in ckpt:
-            state_dict = ckpt['module']
-        elif 'model' in ckpt:
-            state_dict = ckpt['model']
-        else:
-            # 假设文件本身就是 state_dict
-            state_dict = ckpt
+            csd = ckpt['module']  # 这就是 state_dict 字典
+            cfg_yaml = cfg        # .pth 中没有 'model' 对象, 所以必须使用 opt.cfg
         
-        # 尝试从 state_dict (可能是模型对象) 中获取 yaml
-        cfg_yaml = getattr(state_dict, 'yaml', cfg)
+        elif 'model' in ckpt: # (备用) 处理 SparK 风格
+            state_dict_source = ckpt['model']
+            csd = state_dict_source.float().state_dict() if hasattr(state_dict_source, 'float') else state_dict_source
+            cfg_yaml = getattr(state_dict_source, 'yaml', cfg)
+        
+        else: # (备用) 假设 ckpt 本身就是 state_dict
+            csd = ckpt
+            cfg_yaml = cfg
 
         model = Model(cfg_yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)
-
+        model_state_dict = model.state_dict()
         exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []
 
-        # 转换为 float 并获取最终的 state_dict
-        csd = state_dict.float().state_dict() if hasattr(state_dict, 'float') else state_dict
-        model_state_dict = model.state_dict()
-
-        # --- 2. 修正：添加 'model.1.backbone.' 前缀 ---
+        # --- 2. 修正：应用我们发现的 "替换" 规则 ---
         LOGGER.info('Remapping checkpoint keys...')
         new_csd = {}
+        
+        source_prefix = 'sparse_encoder.sp_cnn.'
+        target_prefix = 'model.1.backbone.'
+
         for k, v in csd.items():
-            # 将源键 (如 'features.0.0.c.weight') 
-            # 转换为目标键 (如 'model.1.backbone.features.0.0.c.weight')
-            new_key = 'model.1.backbone.' + k
-
-            if new_key in model_state_dict:
-                new_csd[new_key] = v
+            if k.startswith(source_prefix):
+                # 将 'sparse_encoder.sp_cnn.' 替换为 'model.1.backbone.'
+                new_key = target_prefix + k[len(source_prefix):]
+                
+                if new_key in model_state_dict:
+                    new_csd[new_key] = v
+                # else:
+                    # (调试) LOGGER.warning(f"Key mismatch: {k} -> {new_key} NOT IN MODEL")
             # else:
-                # (调试时取消注释) LOGGER.warning(f"Key mismatch: {k} -> {new_key} not in model")
+                # (调试) LOGGER.info(f"Skipping key (no prefix): {k}") 
 
-        # --- 3. 修正：加载 new_csd ---
-        # 检查是否加载了 backbone
+        # --- 3. 加载并报告 ---
         if not new_csd:
-             LOGGER.warning('WARNING ⚠️ No keys were transferred from {weights}. Check remapping logic.')
+             LOGGER.warning('WARNING ⚠️ No keys were transferred. Check remapping logic.')
 
         model.load_state_dict(new_csd, strict=False)
         LOGGER.info(f'Transferred {len(new_csd)}/{len(model_state_dict)} items from {weights}')
 
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-
     #else:
     #    model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
