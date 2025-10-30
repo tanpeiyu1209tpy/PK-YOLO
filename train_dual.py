@@ -119,17 +119,17 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     #    model.load_state_dict(csd, strict=False)  # load
     #    LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     
-    pretrained = weights.endswith('.pt') or weights.endswith('.pth')  # 支持 .pth
+    pretrained = weights.endswith('.pt') or weights.endswith('.pth')
     if pretrained:
         with torch_distributed_zero_first(LOCAL_RANK):
             weights = attempt_download(weights)
 
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
 
-        # 判断 ckpt 是否为 SparK 风格（包含 'model' key）
+        # 判断是否 SparK 风格
         if 'model' in ckpt:
             state_dict = ckpt['model']
-            cfg_yaml = ckpt['model'].yaml if hasattr(ckpt['model'], 'yaml') else cfg
+            cfg_yaml = getattr(ckpt['model'], 'yaml', cfg)
         else:
             state_dict = ckpt
             cfg_yaml = cfg
@@ -140,13 +140,28 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
         # 转换为 float 并匹配 state_dict
         csd = state_dict.float().state_dict() if hasattr(state_dict, 'float') else state_dict
-        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)
 
-        model.load_state_dict(csd, strict=False)
-        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')
+        # ✅ 修复 key mismatch: 如果是 SparK backbone，去掉开头的 "backbone." 或 "model." 前缀
+        new_csd = {}
+        model_keys = model.state_dict().keys()
+        for k, v in csd.items():
+            # 自动匹配 model state_dict key
+            k_new = k
+            for prefix in ['model.', 'backbone.']:
+                if k.startswith(prefix):
+                    k_new = k[len(prefix):]
+                    break
+            if k_new in model_keys:
+                new_csd[k_new] = v
+
+        model.load_state_dict(new_csd, strict=False)
+        LOGGER.info(f'Transferred {len(new_csd)}/{len(model.state_dict())} items from {weights}')
 
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+
+    #else:
+    #    model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
 
     # Freeze
