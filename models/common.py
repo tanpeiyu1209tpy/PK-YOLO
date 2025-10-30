@@ -32,6 +32,8 @@ from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import copy_attr, smart_inference_mode
 
 
+from .common import Conv
+
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     # Pad to 'same' shape outputs
     if d > 1:
@@ -362,37 +364,91 @@ class Backbone(nn.Module):
     def forward(self, x):
         outputs = self.backbone (x)
         return outputs
-class Down0(nn.Module):
-    def __init__(self,inp):
-        super(Down0, self).__init__()
+#class Down0(nn.Module):
+#   def __init__(self,inp):
+#        super(Down0, self).__init__()
+#
+#    def forward(self, x):
+#        return x[0]
+#class Down1(nn.Module):
+#    def __init__(self,inp):
+#        super(Down1, self).__init__()
+#
+#    def forward(self, x):
+#        return x[1]
+#class Down2(nn.Module):
+#    def __init__(self,inp):
+#        super(Down2, self).__init__()
+#
+#    def forward(self, x):
+#        return x[2]
+#class Down3(nn.Module):
+#    def __init__(self,inp):
+#        super(Down3, self).__init__()
+#
+#    def forward(self, x):
+#        return x[3]
+
+#class Down4(nn.Module):
+#    def __init__(self,inp):
+#        super(Down4, self).__init__()
+#
+#    def forward(self, x):
+#        return x[4]
+
+# 这是一个通用的 Down 模块，我们将用它来替换所有 Down0, Down1, ...
+class Down(nn.Module):
+    def __init__(self, c_in_list, c_out, idx):
+        super(Down, self).__init__()
+        # 从硬编码的列表中获取“预期”的输入通道
+        self.c_in = c_in_list[idx] 
+        # 从 YAML 的 [32] 中获取“目标”的输出通道
+        self.c_out = c_out[0]      
+        self.idx = idx
+        
+        # 构建一个 1x1 卷积层来执行降维
+        # 例如 Down0: Conv(64, 32, 1, 1)
+        # 例如 Down1: Conv(128, 64, 1, 1)
+        self.conv = Conv(self.c_in, self.c_out, 1, 1)
 
     def forward(self, x):
-        return x[0]
-class Down1(nn.Module):
-    def __init__(self,inp):
-        super(Down1, self).__init__()
+        # 1. 从 Backbone 输出列表中选择正确的特征图 (例如 x[0], 它是 64 通道)
+        feat = x[self.idx] 
+        # 2. 通过 1x1 卷积将其降维 (例如 Conv(64, 32) -> 32 通道)
+        return self.conv(feat)
 
-    def forward(self, x):
-        return x[1]
-class Down2(nn.Module):
-    def __init__(self,inp):
-        super(Down2, self).__init__()
+# 你的 Backbone (Layer 1) 输出的通道列表
+# (根据你的错误日志 'got 64 channels' 和标准 RepViT 架构)
+BACKBONE_CHANNELS = [64, 128, 256, 512, 1024] 
 
-    def forward(self, x):
-        return x[2]
-class Down3(nn.Module):
-    def __init__(self,inp):
-        super(Down3, self).__init__()
 
-    def forward(self, x):
-        return x[3]
+# --- 这是 Down0 到 Down4 的新定义 ---
 
-class Down4(nn.Module):
-    def __init__(self,inp):
-        super(Down4, self).__init__()
+class Down0(Down):
+    def __init__(self, c_out):
+        # c_out 将是 [32], idx 是 0
+        super().__init__(BACKBONE_CHANNELS, c_out, 0)
 
-    def forward(self, x):
-        return x[4]
+class Down1(Down):
+    def __init__(self, c_out):
+        # c_out 将是 [64], idx 是 1
+        super().__init__(BACKBONE_CHANNELS, c_out, 1)
+
+class Down2(Down):
+    def __init__(self, c_out):
+        # c_out 将是 [128], idx 是 2
+        super().__init__(BACKBONE_CHANNELS, c_out, 2)
+
+class Down3(Down):
+    def __init__(self, c_out):
+        # c_out 将是 [256], idx 是 3
+        super().__init__(BACKBONE_CHANNELS, c_out, 3)
+
+class Down4(Down):
+    def __init__(self, c_out):
+        # c_out 将是 [512], idx 是 4
+        super().__init__(BACKBONE_CHANNELS, c_out, 4)
+
 class Res(nn.Module):
     # ResNet bottleneck
     def __init__(self, c1, c2, shortcut=True, g=1, e=0.5):  # ch_in, ch_out, shortcut, groups, expansion
