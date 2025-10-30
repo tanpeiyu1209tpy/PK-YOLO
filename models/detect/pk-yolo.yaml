@@ -132,7 +132,7 @@
 # parameters
 nc: 3  # number of classes
 depth_multiple: 1.0  # model depth multiple
-width_multiple: 0.5  # layer channel multiple (保持 0.5)
+width_multiple: 1.0  # layer channel multiple (保持 0.5)
 
 # anchors
 anchors: 3
