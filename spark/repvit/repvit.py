@@ -217,9 +217,9 @@ class RepViT(nn.Module):
 
         #self = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self)
         self.train()
-        #self.out_indices=[0,5,11, 37, 42]
+        self.out_indices=[0,5,11, 37, 42]
         #               320 160 80  40    20
-        self.out_indices = [4, 8, 22, 25]
+        #self.out_indices = [4, 8, 22, 25]
         
     def train(self, mode=True):
         """Convert the model into training mode while keep layers freezed."""
