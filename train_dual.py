@@ -126,46 +126,46 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
 
-        # 判断是否 SparK 风格
-        if 'model' in ckpt:
+        # --- 1. 修正：从 'module' 或 'model' 键中提取 state_dict ---
+        if 'module' in ckpt:
+            state_dict = ckpt['module']
+        elif 'model' in ckpt:
             state_dict = ckpt['model']
-            cfg_yaml = getattr(ckpt['model'], 'yaml', cfg)
         else:
+            # 假设文件本身就是 state_dict
             state_dict = ckpt
-            cfg_yaml = cfg
+        
+        # 尝试从 state_dict (可能是模型对象) 中获取 yaml
+        cfg_yaml = getattr(state_dict, 'yaml', cfg)
 
         model = Model(cfg_yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)
 
         exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []
 
-        # 转换为 float 并匹配 state_dict
+        # 转换为 float 并获取最终的 state_dict
         csd = state_dict.float().state_dict() if hasattr(state_dict, 'float') else state_dict
+        model_state_dict = model.state_dict()
 
-        model_state_dict = model.state_dict() # 获取目标键
-
-        # --- 插入这两行来打印键名 ---
-        print("--- 2. TARGET Keys (from pk-yolo model) ---")
-        print(list(model_state_dict.keys())[:20])
-        # --- 打印结束 ---
-
-        # 你的重命名逻辑在这里...
+        # --- 2. 修正：添加 'model.1.backbone.' 前缀 ---
         LOGGER.info('Remapping checkpoint keys...')
-
-        # ✅ 修复 key mismatch: 如果是 SparK backbone，去掉开头的 "backbone." 或 "model." 前缀
         new_csd = {}
-        model_keys = model.state_dict().keys()
         for k, v in csd.items():
-            # 自动匹配 model state_dict key
-            k_new = k
-            for prefix in ['model.', 'backbone.']:
-                if k.startswith(prefix):
-                    k_new = k[len(prefix):]
-                    break
-            if k_new in model_keys:
-                new_csd[k_new] = v
+            # 将源键 (如 'features.0.0.c.weight') 
+            # 转换为目标键 (如 'model.1.backbone.features.0.0.c.weight')
+            new_key = 'model.1.backbone.' + k
+
+            if new_key in model_state_dict:
+                new_csd[new_key] = v
+            # else:
+                # (调试时取消注释) LOGGER.warning(f"Key mismatch: {k} -> {new_key} not in model")
+
+        # --- 3. 修正：加载 new_csd ---
+        # 检查是否加载了 backbone
+        if not new_csd:
+             LOGGER.warning('WARNING ⚠️ No keys were transferred from {weights}. Check remapping logic.')
 
         model.load_state_dict(new_csd, strict=False)
-        LOGGER.info(f'Transferred {len(new_csd)}/{len(model.state_dict())} items from {weights}')
+        LOGGER.info(f'Transferred {len(new_csd)}/{len(model_state_dict)} items from {weights}')
 
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
