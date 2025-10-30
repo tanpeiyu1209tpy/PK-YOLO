@@ -141,6 +141,16 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         # 转换为 float 并匹配 state_dict
         csd = state_dict.float().state_dict() if hasattr(state_dict, 'float') else state_dict
 
+        model_state_dict = model.state_dict() # 获取目标键
+
+        # --- 插入这两行来打印键名 ---
+        print("--- 2. TARGET Keys (from pk-yolo model) ---")
+        print(list(model_state_dict.keys())[:20])
+        # --- 打印结束 ---
+
+        # 你的重命名逻辑在这里...
+        LOGGER.info('Remapping checkpoint keys...')
+
         # ✅ 修复 key mismatch: 如果是 SparK backbone，去掉开头的 "backbone." 或 "model." 前缀
         new_csd = {}
         model_keys = model.state_dict().keys()
