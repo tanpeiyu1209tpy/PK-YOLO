@@ -144,7 +144,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
             # 提取 RepViT 权重
             state_dict = ckpt['module']
-            repvit_state = {k.replace('sparse_encoder.sp_cnn.', ''): v
+            repvit_state = {k.replace('sparse_encoder.sp_cnn.', 'backbone.'): v
                             for k, v in state_dict.items()
                             if k.startswith('sparse_encoder.sp_cnn.')}
             
