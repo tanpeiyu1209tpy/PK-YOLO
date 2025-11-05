@@ -105,21 +105,84 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     is_coco = isinstance(val_path, str) and val_path.endswith('val2017.txt')  # COCO dataset
 
     # Model
-    check_suffix(weights, '.pt')  # check weights
-    pretrained = weights.endswith('.pt')
+    #check_suffix(weights, '.pt')  # check weights
+    #pretrained = weights.endswith('.pt')
+    #if pretrained:
+    #    with torch_distributed_zero_first(LOCAL_RANK):
+    #        weights = attempt_download(weights)  # download if not found locally
+    #    ckpt = torch.load(weights, map_location='cpu', weights_only=False)
+    #    #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+    #    model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+    #    exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+    #    csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+    #    csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+    #    model.load_state_dict(csd, strict=False)  # load
+    #    LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+    #else:
+    #    model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+
+
+    print(f"weights type: {type(weights)}, value: {weights}")
+
+    pretrained = weights.endswith(('.pt', '.pth'))
     if pretrained:
-        with torch_distributed_zero_first(LOCAL_RANK):
-            weights = attempt_download(weights)  # download if not found locally
+        #with torch_distributed_zero_first(LOCAL_RANK):
+        #    weights = attempt_download(weights)  # download if not found locally
+        print(">>> Start loading weights")
         ckpt = torch.load(weights, map_location='cpu', weights_only=False)
-        #ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
-        model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
-        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-        model.load_state_dict(csd, strict=False)  # load
-        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+        print(">>> Finish loading weights")
+
+        if 'model' in ckpt:
+            model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+            exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+            csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+            csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+            model.load_state_dict(csd, strict=False)  # load
+            LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+        elif 'module' in ckpt:
+            LOGGER.info(f'🔶 Detected SparK-style checkpoint: {weights}')
+            model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+            # 提取 RepViT 权重
+            state_dict = ckpt['module']
+            repvit_state = {k.replace('sparse_encoder.sp_cnn.', ''): v
+                            for k, v in state_dict.items()
+                            if k.startswith('sparse_encoder.sp_cnn.')}
+            
+            # 加载进 backbone
+            if hasattr(model, 'backbone'):
+                backbone_state = model.backbone.state_dict()
+                csd = intersect_dicts(repvit_state, backbone_state)
+                model.backbone.load_state_dict(csd, strict=False)
+                LOGGER.info(f'✅ Transferred {len(csd)} backbone layers into model.backbone')
+            #elif hasattr(model, 'model') and isinstance(model.model, list) and len(model.model) > 0:
+            #    backbone_state = model.model[1].state_dict()
+            #    csd = intersect_dicts(repvit_state, backbone_state)
+            #    model.model[1].load_state_dict(csd, strict=False)
+            #    LOGGER.info(f'✅ Transferred {len(csd)} backbone layers into model.model[0]')
+            elif hasattr(model, 'model'):
+                # YOLO 风格模型通常是 nn.ModuleList 而不是 list
+                submodules = list(model.model)
+                if len(submodules) > 1:
+                    backbone = submodules[1]
+                    backbone_state = backbone.state_dict()
+                    csd = intersect_dicts(repvit_state, backbone_state)
+                    backbone.load_state_dict(csd, strict=False)
+                    LOGGER.info(f'✅ Transferred {len(csd)} backbone layers into model.model[1]')
+                else:
+                    raise AttributeError("❌ model.model has no backbone-like submodule.")
+            else:
+                raise AttributeError("❌ Could not find backbone in model to load RepViT weights.")
+            LOGGER.info(f'✅ Transferred {len(csd)} backbone layers from {weights}')
+        
+        else:
+            raise ValueError(f"❌ Unrecognized checkpoint format: {list(ckpt.keys())}")
     else:
-        model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+        # 新模型（不加载预训练）
+        model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)
+
+# -------------------------------------------------------------
+    
+    
     amp = check_amp(model)  # check AMP
 
     # Freeze
