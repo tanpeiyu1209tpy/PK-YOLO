@@ -105,6 +105,7 @@ def run(
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
 
+        '''
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -144,7 +145,61 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+'''
+# --------------------------------------start modification----------------------------------------------
+        # Process predictions
+        for i, det in enumerate(pred):  # per image
+            seen += 1
+            if webcam:  # batch_size >= 1
+                p, im0, frame = path[i], im0s[i].copy(), dataset.count
+                s += f'{i}: '
+            else:
+                p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
 
+            p = Path(p)  # to Path
+            save_path = str(save_dir / p.name)  # im.jpg
+            # txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
+            s += '%gx%g ' % im.shape[2:]  # print string
+            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
+            imc = im0.copy() if save_crop else im0  # for save_crop
+            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            if len(det):
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+
+                # Print results
+                for c in det[:, 5].unique():
+                    n = (det[:, 5] == c).sum()  # detections per class
+                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+
+                # Write results
+                # --- START OF MODIFICATION ---
+                # 使用 enumerate(reversed(det)) 获取每个框的唯一索引 j
+                for j, (*xyxy, conf, cls) in enumerate(reversed(det)):
+                    if save_txt:  # Write to file
+                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                        
+                        # 修改 1: 为每个 crop 生成一个独一无二的 .txt 文件名
+                        # 格式例如: runs/detect/exp/labels/P001_0.txt
+                        txt_filename = f'{p.stem}_{j}' + ('' if dataset.mode == 'image' else f'_{frame}')
+                        txt_path = str(save_dir / 'labels' / txt_filename)
+                        
+                        with open(f'{txt_path}.txt', 'w') as f: # 使用 'w' 模式，因为每个文件只存一行
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+
+                    if save_img or save_crop or view_img:  # Add bbox to image
+                        c = int(cls)  # integer class
+                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        if save_crop:
+                            # 修改 2: 为每个 crop 生成一个独一无二的 .jpg 文件名
+                            # 格式例如: runs/detect/exp/crops/Mass/P001_0.jpg
+                            # 这样 P001_0.jpg 就完美对应上面的 P001_0.txt
+                            file_path = save_dir / 'crops' / names[c] / f'{p.stem}_{j}.jpg'
+                            save_one_box(xyxy, imc, file=file_path, BGR=True)
+# --------------------------------------------------- END OF MODIFICATION ------------------------------------------------
+            
             # Stream results
             im0 = annotator.result()
             if view_img:
