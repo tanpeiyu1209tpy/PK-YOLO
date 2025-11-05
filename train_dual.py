@@ -40,8 +40,8 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
                            yaml_save, one_flat_cycle)
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
-from utils.loss_tal_dual import ComputeLoss
-#from utils.loss_tal_dual import ComputeLossLH as ComputeLoss
+#from utils.loss_tal_dual import ComputeLoss
+from utils.loss_tal_dual import ComputeLossLH as ComputeLoss
 #from utils.loss_tal_dual import ComputeLossLHCF as ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve
