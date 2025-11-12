@@ -30,4 +30,26 @@ mosaic: 1.0  # image mosaic (probability)
 mixup: 0.15  # image mixup (probability)
 copy_paste: 0.3  # segment copy-paste (probability)
 #
-size: 512 
+albumentations:
+  size: 640  # <--- 这就是你日志中报错缺失的 `size` 字段
+  RandomResizedCrop:
+    height: 640
+    width: 640
+    scale: [0.8, 1.0]
+    ratio: [0.9, 1.11]
+    p: 0.0
+  Blur:
+    p: 0.01
+  MedianBlur:
+    p: 0.01
+  ToGray:
+    p: 0.01
+  CLAHE:
+    p: 0.01
+  RandomBrightnessContrast:
+    p: 0.0
+  RandomGamma:
+    p: 0.0
+  ImageCompression:
+    quality_lower: 75
+    p: 0.0
