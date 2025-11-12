@@ -581,8 +581,8 @@ def main(opt, callbacks=Callbacks()):
             from models.yolo import DetectionModel
             # 使用 safe_globals 加载 checkpoint
             with torch.serialization.safe_globals([DetectionModel]):
-            ckpt = torch.load(last, map_location='cpu', weights_only=False)
-            d = ckpt['opt']
+                ckpt = torch.load(last, map_location='cpu', weights_only=False)
+                d = ckpt['opt']
 
         opt = argparse.Namespace(**d)  # replace
         opt.cfg, opt.weights, opt.resume = '', str(last), True  # reinstate
