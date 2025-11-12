@@ -21,7 +21,7 @@ def _make_divisible(v, divisor, min_value=None):
         new_v += divisor
     return new_v
 
-from timm.models.layers import SqueezeExcite
+from timm.layers import SqueezeExcite
 
 import torch
 
