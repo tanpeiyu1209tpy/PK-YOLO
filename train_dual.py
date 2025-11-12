@@ -236,9 +236,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
     # Resume
     best_fitness, start_epoch = 0.0, 0
+    best_epoch = 0
     if pretrained:
         if resume:
             best_fitness, start_epoch, epochs = smart_resume(ckpt, optimizer, ema, weights, epochs, resume)
+            best_epoch = ckpt.get('best_epoch', start_epoch - 1)
         del ckpt, csd
 
     # DP mode
@@ -437,6 +439,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
+                best_epoch = epoch
+                LOGGER.info(f'🎉 New best model found at epoch {epoch} with fitness {fi[0]:.4f}')
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
@@ -445,6 +449,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 ckpt = {
                     'epoch': epoch,
                     'best_fitness': best_fitness,
+                    'best_epoch': best_epoch,
                     'model': deepcopy(de_parallel(model)).half(),
                     'ema': deepcopy(ema.ema).half(),
                     'updates': ema.updates,
@@ -475,6 +480,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # end training -----------------------------------------------------------------------------------------------------
     if RANK in {-1, 0}:
         LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.')
+        LOGGER.info(f'Final best epoch was {best_epoch} with fitness {best_fitness[0]:.4f}')
         for f in last, best:
             if f.exists():
                 strip_optimizer(f)  # strip optimizers
