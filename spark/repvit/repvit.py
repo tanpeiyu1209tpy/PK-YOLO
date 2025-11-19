@@ -291,6 +291,7 @@ def repvit_m1_1(pretrained=False, num_classes = 1000, distillation=False, init_c
     ]
     return RepViT(cfgs, init_cfg=init_cfg, pretrained=pretrained, distillation=distillation, out_indices=out_indices)
 
+@register_model
 def repvit_m1_5(pretrained=False, num_classes = 1000, distillation=False, init_cfg=None, out_indices=[], **kwargs):
     """
     Constructs a MobileNetV3-Large model
@@ -342,7 +343,7 @@ def repvit_m1_5(pretrained=False, num_classes = 1000, distillation=False, init_c
     ]
     return RepViT(cfgs, init_cfg=init_cfg, pretrained=pretrained, distillation=distillation, out_indices=out_indices)
 
-
+@register_model
 def repvit_m2_3(pretrained=False, num_classes = 1000, distillation=False, init_cfg=None, out_indices=[], **kwargs):
     """
     Constructs a MobileNetV3-Large model
