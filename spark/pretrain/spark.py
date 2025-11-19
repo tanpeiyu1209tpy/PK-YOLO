@@ -42,7 +42,7 @@ class SparK(nn.Module):
         # build the `densify` layers
         e_widths, d_width = self.sparse_encoder.enc_feat_map_chs, self.dense_decoder.width
         e_widths: List[int]
-        '''
+        
         for i in range(self.hierarchy): # from the smallest feat map to the largest; i=0: the last feat map; i=1: the second last feat map ...
             e_width = e_widths.pop()
             # create mask token
@@ -72,40 +72,7 @@ class SparK(nn.Module):
             
             # todo: the decoder's width follows a simple halfing rule; you can change it to any other rule
             d_width //= 2   
-            '''
-        for i in range(self.hierarchy):
-            e_width = e_widths.pop()
-        
-            # create densify norm
-            if self.densify_norm_str == 'bn':
-                densify_norm = (encoder.SparseSyncBatchNorm2d if self.sbn else encoder.SparseBatchNorm2d)(e_width)
-            elif self.densify_norm_str == 'ln':
-                densify_norm = encoder.SparseConvNeXtLayerNorm(e_width, data_format='channels_first', sparse=True)
-            else:
-                densify_norm = nn.Identity()
-            self.densify_norms.append(densify_norm)
-        
-            # create densify proj
-            if i == 0 and e_width == d_width:
-                densify_proj = nn.Identity()
-                out_ch = e_width  # Identity 的输出通道就是输入通道
-                print(f'[SparK.__init__, densify {i+1}/{self.hierarchy}]: use nn.Identity() as densify_proj')
-            else:
-                kernel_size = 1 if i <= 0 else 3
-                densify_proj = nn.Conv2d(e_width, d_width, kernel_size=kernel_size, stride=1, padding=kernel_size // 2, bias=True)
-                out_ch = d_width  # Conv2d 输出通道
-                print(f'[SparK.__init__, densify {i+1}/{self.hierarchy}]: densify_proj(ksz={kernel_size}, #para={sum(x.numel() for x in densify_proj.parameters()) / 1e6:.2f}M)')
-        
-            self.densify_projs.append(densify_proj)
-        
-            # create mask token using densify output channel
-            p = nn.Parameter(torch.zeros(1, out_ch, 1, 1))
-            trunc_normal_(p, mean=0, std=.02, a=-.02, b=.02)
-            self.mask_tokens.append(p)
-        
-            # update d_width for next layer
-            d_width //= 2
-
+            
         
         print(f'[SparK.__init__] dims of mask_tokens={tuple(p.numel() for p in self.mask_tokens)}')
         
