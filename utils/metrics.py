@@ -11,8 +11,7 @@ from utils import TryExcept, threaded
 
 def fitness(x):
     # Model fitness as a weighted combination of metrics
-    # w = [0.0, 0.0, 0.1, 0.9]  # weights for [P, R, f1, mAP@0.5:0.95]
-    w = [0.0, 0.5, 0.0, 0.5]  # weights for [P, R, f1, mAP@0.5:0.95]
+    w = [0.2, 0.4, 0.2, 0.2]  # weights for [P, R, map@0.5, mAP@0.5:0.95]
     return (x[:, :4] * w).sum(1)
 
 
@@ -76,6 +75,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
 
     # Compute F1 (harmonic mean of precision and recall)
     f1 = 2 * p * r / (p + r + eps)
+    mAP_0_5 = ap[:, 0].mean()
     names = [v for k, v in names.items() if k in unique_classes]  # list: only classes that have data
     names = dict(enumerate(names))  # to dict
     if plot:
@@ -88,7 +88,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
     p, r, f1 = p[:, i], r[:, i], f1[:, i]
     tp = (r * nt).round()  # true positives
     fp = (tp / (p + eps) - tp).round()  # false positives
-    return tp, fp, p, r, f1, ap, unique_classes.astype(int)
+    return tp, fp, p, r, mAP_0_5, ap, unique_classes.astype(int)
 
 
 def compute_ap(recall, precision):
