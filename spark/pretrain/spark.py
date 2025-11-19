@@ -98,7 +98,7 @@ class SparK(nn.Module):
         
         # step2. Encode: get hierarchical encoded sparse features (a list containing 4 feature maps at 4 scales)
         fea_bcffs: List[torch.Tensor] = self.sparse_encoder(masked_bchw)
-        #fea_bcffs.reverse()  # after reversion: from the smallest feature map to the largest
+        fea_bcffs.reverse()  # after reversion: from the smallest feature map to the largest
         
         # step3. Densify: get hierarchical dense features for decoding
         cur_active = active_b1ff     # (B, 1, f, f)
