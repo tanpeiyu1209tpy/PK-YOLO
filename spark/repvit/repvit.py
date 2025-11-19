@@ -192,8 +192,8 @@ class RepViT(nn.Module):
         super(RepViT, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs
-        self.embed_dims = [64, 128, 256, 512]
-
+        #self.embed_dims = [64, 128, 256, 512]
+        self.embed_dims = [80, 160, 320, 640]
         # building first layer
         input_channel = self.cfgs[0][2]
         patch_embed = torch.nn.Sequential(Conv2d_BN(3, input_channel // 2, 3, 2, 1), torch.nn.GELU() )
