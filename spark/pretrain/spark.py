@@ -41,6 +41,7 @@ class SparK(nn.Module):
         
         # build the `densify` layers
         e_widths, d_width = self.sparse_encoder.enc_feat_map_chs, self.dense_decoder.width
+        e_widths.reverse()
         e_widths: List[int]
         
         for i in range(self.hierarchy): # from the smallest feat map to the largest; i=0: the last feat map; i=1: the second last feat map ...
