@@ -105,10 +105,15 @@ class SparK(nn.Module):
         to_dec = []
         for i, bcff in enumerate(fea_bcffs):  # from the smallest feature map to the largest
             if bcff is not None:
-                bcff = self.densify_norms[i](bcff)
-                mask_tokens = self.mask_tokens[i].expand_as(bcff)
-                bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)   # fill in empty (non-active) positions with [mask] tokens
-                bcff: torch.Tensor = self.densify_projs[i](bcff)
+                #bcff = self.densify_norms[i](bcff)
+                #mask_tokens = self.mask_tokens[i].expand_as(bcff)
+                #bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)   # fill in empty (non-active) positions with [mask] tokens
+                #bcff: torch.Tensor = self.densify_projs[i](bcff)
+                bcff = self.densify_norms[i](bcff)                 # 先做 BN/LayerNorm
+                mask_tokens = self.mask_tokens[i].expand_as(bcff)  # mask token 的通道 = densify_norm 输出通道
+                bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)  # 填充 mask
+                bcff = self.densify_projs[i](bcff)                 # 再做 densify_proj 投影到 decoder width
+
             to_dec.append(bcff)
             cur_active = cur_active.repeat_interleave(2, dim=2).repeat_interleave(2, dim=3)  # dilate the mask map, from (B, 1, f, f) to (B, 1, H, W)
         
