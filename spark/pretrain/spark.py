@@ -44,7 +44,9 @@ class SparK(nn.Module):
         for i in range(self.hierarchy): # from the smallest feat map to the largest; i=0: the last feat map; i=1: the second last feat map ...
             e_width = e_widths.pop()
             # create mask token
-            p = nn.Parameter(torch.zeros(1, e_width, 1, 1))
+            #p = nn.Parameter(torch.zeros(1, e_width, 1, 1))
+            p = nn.Parameter(torch.zeros(1, d_width, 1, 1))
+            
             trunc_normal_(p, mean=0, std=.02, a=-.02, b=.02)
             self.mask_tokens.append(p)
             
