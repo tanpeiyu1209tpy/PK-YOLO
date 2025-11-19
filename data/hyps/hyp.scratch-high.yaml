@@ -33,12 +33,12 @@ copy_paste: 0.0  # segment copy-paste (probability)
 #
 albumentations:
   size: 640  # <--- 这就是你日志中报错缺失的 `size` 字段
-  RandomResizedCrop:
-    height: 640
-    width: 640
-    scale: [0.8, 1.0]
-    ratio: [0.9, 1.11]
-    p: 0.0
+#  RandomResizedCrop:
+#    height: 640
+#    width: 640
+#    scale: [0.8, 1.0]
+#    ratio: [0.9, 1.11]
+#    p: 0.0
   Blur:
     p: 0.01
   MedianBlur:
