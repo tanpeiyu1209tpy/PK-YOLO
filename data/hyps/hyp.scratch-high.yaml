@@ -7,7 +7,7 @@ warmup_momentum: 0.8  # warmup initial momentum
 warmup_bias_lr: 0.1  # warmup initial bias lr
 box: 7.5  # box loss gain
 cls: 0.25  # cls loss gain
-cls_pw: [1, 6]
+cls_pw: [1, 5]
 # cls_pw: 1.0  # cls BCELoss positive_weight
 obj: 1.5  # obj loss gain (scale with pixels)
 obj_pw: 3.0  # obj BCELoss positive_weight
