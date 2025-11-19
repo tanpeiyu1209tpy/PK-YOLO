@@ -42,7 +42,7 @@ class SparK(nn.Module):
         # build the `densify` layers
         e_widths, d_width = self.sparse_encoder.enc_feat_map_chs, self.dense_decoder.width
         e_widths: List[int]
-        
+        '''
         for i in range(self.hierarchy): # from the smallest feat map to the largest; i=0: the last feat map; i=1: the second last feat map ...
             e_width = e_widths.pop()
             # create mask token
@@ -72,7 +72,39 @@ class SparK(nn.Module):
             
             # todo: the decoder's width follows a simple halfing rule; you can change it to any other rule
             d_width //= 2   
+         '''
+        for i in range(self.hierarchy):
+            e_width = e_widths.pop()
             
+            # 先创建 densify norm
+            if self.densify_norm_str == 'bn':
+                densify_norm = (encoder.SparseSyncBatchNorm2d if self.sbn else encoder.SparseBatchNorm2d)(e_width)
+                mask_ch = e_width  # BN 输出通道不变
+            elif self.densify_norm_str == 'ln':
+                densify_norm = encoder.SparseConvNeXtLayerNorm(e_width, data_format='channels_first', sparse=True)
+                mask_ch = e_width  # LayerNorm 通道不变
+            else:
+                densify_norm = nn.Identity()
+                mask_ch = e_width
+            self.densify_norms.append(densify_norm)
+        
+            # 用 densify_norm 输出通道创建 mask token
+            p = nn.Parameter(torch.zeros(1, mask_ch, 1, 1))
+            trunc_normal_(p, mean=0, std=.02, a=-.02, b=.02)
+            self.mask_tokens.append(p)
+        
+            # 创建 densify_proj
+            if i == 0 and e_width == d_width:
+                densify_proj = nn.Identity()
+                print(f'[SparK.__init__, densify {i+1}/{self.hierarchy}]: use nn.Identity() as densify_proj')
+            else:
+                kernel_size = 1 if i <= 0 else 3
+                densify_proj = nn.Conv2d(mask_ch, d_width, kernel_size=kernel_size, stride=1, padding=kernel_size // 2, bias=True)
+                print(f'[SparK.__init__, densify {i+1}/{self.hierarchy}]: densify_proj(ksz={kernel_size}, #para={sum(x.numel() for x in densify_proj.parameters()) / 1e6:.2f}M)')
+            self.densify_projs.append(densify_proj)
+        
+            d_width //= 2
+
         
         print(f'[SparK.__init__] dims of mask_tokens={tuple(p.numel() for p in self.mask_tokens)}')
         
@@ -105,15 +137,11 @@ class SparK(nn.Module):
         to_dec = []
         for i, bcff in enumerate(fea_bcffs):  # from the smallest feature map to the largest
             if bcff is not None:
-                #bcff = self.densify_norms[i](bcff)
-                #mask_tokens = self.mask_tokens[i].expand_as(bcff)
-                #bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)   # fill in empty (non-active) positions with [mask] tokens
-                #bcff: torch.Tensor = self.densify_projs[i](bcff)
-                bcff = self.densify_norms[i](bcff)                 # 先做 BN/LayerNorm
-                mask_tokens = self.mask_tokens[i].expand_as(bcff)  # mask token 的通道 = densify_norm 输出通道
-                bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)  # 填充 mask
-                bcff = self.densify_projs[i](bcff)                 # 再做 densify_proj 投影到 decoder width
-
+                bcff = self.densify_norms[i](bcff)
+                mask_tokens = self.mask_tokens[i].expand_as(bcff)
+                bcff = torch.where(cur_active.expand_as(bcff), bcff, mask_tokens)   # fill in empty (non-active) positions with [mask] tokens
+                bcff: torch.Tensor = self.densify_projs[i](bcff)
+                
             to_dec.append(bcff)
             cur_active = cur_active.repeat_interleave(2, dim=2).repeat_interleave(2, dim=3)  # dilate the mask map, from (B, 1, f, f) to (B, 1, H, W)
         
