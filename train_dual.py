@@ -8,8 +8,9 @@ from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
-import torch.serialization
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 
 import numpy as np
 import torch
@@ -40,13 +41,15 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
                            yaml_save, one_flat_cycle)
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
-#from utils.loss_tal_dual import ComputeLoss
-from utils.loss_tal_dual import ComputeLossLH as ComputeLoss
+from utils.loss_tal_dual import ComputeLoss
+#from utils.loss_tal_dual import ComputeLossLH as ComputeLoss
 #from utils.loss_tal_dual import ComputeLossLHCF as ComputeLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
-                               smart_resume, torch_distributed_zero_first, load_spark_repvit)
+                               smart_resume, torch_distributed_zero_first)
+
+from utils.torch_utils import load_spark_repvit
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -103,7 +106,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     names = {0: 'item'} if single_cls and len(data_dict['names']) != 1 else data_dict['names']  # class names
     #is_coco = isinstance(val_path, str) and val_path.endswith('coco/val2017.txt')  # COCO dataset
     is_coco = isinstance(val_path, str) and val_path.endswith('val2017.txt')  # COCO dataset
-    
+
     # Model
     check_suffix(weights, ('.pt', '.pth'))  # check weights
     is_yolo_pt = weights.endswith('.pt')
@@ -126,10 +129,25 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         LOGGER.info('Initialized backbone with SparK pretrained weights')
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device) 
-        
-    amp = check_amp(model)  # check AMP
+
+    amp = check_amp(model)
 
     # Freeze
+    '''
+    freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
+    num_freeze = 0
+    num_total = 0
+    for k, v in model.named_parameters():
+        v.requires_grad = True  # train all layers TODO: uncomment this line as in master
+        # v.register_hook(lambda x: torch.nan_to_num(x))  # NaN to 0 (commented for erratic training results)
+        num_total += 1
+        if any(x in k for x in freeze):
+            LOGGER.info(f'freezing {k}')
+            v.requires_grad = False
+            num_freeze += 1
+    LOGGER.info(f'Frozen {num_freeze}/{num_total} parameters.')
+    '''
+
     freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
     for k, v in model.named_parameters():
         v.requires_grad = True  # train all layers TODO: uncomment this line as in master
@@ -180,7 +198,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
     # Resume
     best_fitness, start_epoch = 0.0, 0
-    best_epoch = 0
     if is_yolo_pt:
         if resume:
             best_fitness, start_epoch, epochs = smart_resume(ckpt, optimizer, ema, weights, epochs, resume)
@@ -373,7 +390,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 single_cls=single_cls,
                                                 dataloader=val_loader,
                                                 save_dir=save_dir,
-                                                plots=True,
+                                                plots=False,
                                                 callbacks=callbacks,
                                                 compute_loss=compute_loss)
 
@@ -382,8 +399,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
-                best_epoch = epoch
-                LOGGER.info(f'New best model found at epoch {epoch} with fitness {fi[0]:.5f}')
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
@@ -392,7 +407,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 ckpt = {
                     'epoch': epoch,
                     'best_fitness': best_fitness,
-                    'best_epoch': best_epoch,
                     'model': deepcopy(de_parallel(model)).half(),
                     'ema': deepcopy(ema.ema).half(),
                     'updates': ema.updates,
@@ -423,7 +437,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # end training -----------------------------------------------------------------------------------------------------
     if RANK in {-1, 0}:
         LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.')
-        LOGGER.info(f'Final best epoch was {best_epoch} with fitness {best_fitness[0]:.4f}')
         for f in last, best:
             if f.exists():
                 strip_optimizer(f)  # strip optimizers
@@ -520,13 +533,7 @@ def main(opt, callbacks=Callbacks()):
             with open(opt_yaml, errors='ignore') as f:
                 d = yaml.safe_load(f)
         else:
-            #d = torch.load(last, map_location='cpu')['opt']
-            from models.yolo import DetectionModel
-            # 使用 safe_globals 加载 checkpoint
-            with torch.serialization.safe_globals([DetectionModel]):
-                ckpt = torch.load(last, map_location='cpu', weights_only=False)
-                d = ckpt['opt']
-
+            d = torch.load(last, map_location='cpu')['opt']
         opt = argparse.Namespace(**d)  # replace
         opt.cfg, opt.weights, opt.resume = '', str(last), True  # reinstate
         if is_url(opt_data):
