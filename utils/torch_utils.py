@@ -535,3 +535,43 @@ class ModelEMA:
     def update_attr(self, model, include=(), exclude=('process_group', 'reducer')):
         # Update EMA attributes
         copy_attr(self.ema, model, include, exclude)
+
+def load_spark_repvit(model, ckpt_path):
+    print("[PK-YOLO] Loading SparK RepViT pretrained backbone...")
+
+    ckpt = torch.load(ckpt_path, map_location="cpu")
+
+    if "module" in ckpt:
+        ckpt = ckpt["module"]
+    if "state_dict" in ckpt:
+        ckpt = ckpt["state_dict"]
+
+    new_state = {}
+    for k, v in ckpt.items():
+
+        if not k.startswith("sparse_encoder.sp_cnn.model.features."):
+            continue
+
+        # 取 index
+        block_id = int(k.split(".")[4])
+
+        max_block = len(model.model[1].backbone.features)-1
+        if block_id > max_block:
+            continue
+
+        yolok = k.replace(
+            "sparse_encoder.sp_cnn.model.",
+            "model.1.backbone."
+        )
+
+        new_state[yolok] = v
+
+    # 只保留 shape 完全相同的 keys
+    model_state = model.state_dict()
+    loadable = {k: v for k, v in new_state.items()
+                if k in model_state and model_state[k].shape == v.shape}
+
+    model_state.update(loadable)
+    model.load_state_dict(model_state, strict=False)
+
+    print(f"[PK-YOLO] Loaded {len(loadable)} layers.")
