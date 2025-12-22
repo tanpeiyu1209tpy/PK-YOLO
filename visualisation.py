@@ -114,7 +114,8 @@ def visualize_one_view(ax_row, patch_name, distance, image_dir, gt_dir, yolo_pre
 # Main
 # ======================================================
 def main(args):
-
+    out_dir = args.out_dir
+    os.makedirs(out_dir, exist_ok=True)
     df = pd.read_csv(args.siamese_csv)
 
     if args.max_cases > 0:
@@ -145,7 +146,7 @@ def main(args):
         )
 
         patient_id = row["CC_patch"].split("_")[0]
-        os.makedirs(out_dir, exist_ok=True)
+
         out_path = os.path.join(
             args.out_dir,
             f"{idx:04d}_{patient_id}.png"
