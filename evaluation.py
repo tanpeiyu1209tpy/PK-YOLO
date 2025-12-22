@@ -10,6 +10,10 @@ from collections import defaultdict
 # YOLO official metric utils
 from utils.metrics import ap_per_class, box_iou
 
+names = {
+    0: "Mass",
+    1: "Suspicious_Calcification"
+}
 
 # ==================================================
 # Utils
@@ -150,7 +154,7 @@ def evaluate(gt_dir, yolo_pred_dir, siamese_csv):
 
     stats = [np.concatenate(x, 0) for x in zip(*stats)]
 
-    tp, fp, p, r, ap50, ap, ap_class = ap_per_class(*stats)
+    tp, fp, p, r, ap50, ap, ap_class = ap_per_class(*stats,names=names)
 
     print("\n==============================")
     print("  FINAL YOLO-STYLE EVALUATION ")
