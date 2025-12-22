@@ -202,6 +202,13 @@ if __name__ == "__main__":
         default=10,
         help="Max number of cases to visualize (-1 for all)",
     )
+    parser.add_argument(
+        "--out_dir",
+        type=str,
+        default="vis_results",
+        help="directory to save visualisation images"
+    )
+
 
     args = parser.parse_args()
 
