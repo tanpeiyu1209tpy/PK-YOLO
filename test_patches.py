@@ -56,10 +56,7 @@ def prepare_cmcnet_patches(yolo_crop_dir, out_dir):
             os.makedirs(save_dir, exist_ok=True)
 
             src = os.path.join(cls_dir, fname)
-            dst = os.path.join(
-                save_dir,
-                f"{patient_id}_{side}_{view}_pred{idx}_yolo{idx}.png"
-            )
+            dst = os.path.join(save_dir, fname)
 
             shutil.copy(src, dst)
             total += 1
