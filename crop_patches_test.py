@@ -114,10 +114,10 @@ def crop_yolo_patches(
 # -----------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("YOLO → CMCNet patch crop")
-    parser.add_argument("--yolo-img-dir", required=True)
-    parser.add_argument("--yolo-label-dir", required=True)
-    parser.add_argument("--out-dir", default="cmcnet_patches")
-    parser.add_argument("--patch-size", type=int, default=128)
+    parser.add_argument("--yolo_img_dir", required=True)
+    parser.add_argument("--yolo_label_dir", required=True)
+    parser.add_argument("--out_dir", default="cmcnet_patches")
+    parser.add_argument("--patch_size", type=int, default=128)
 
     args = parser.parse_args()
 
