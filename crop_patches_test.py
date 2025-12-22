@@ -19,8 +19,8 @@ def yolo_to_xyxy(xc, yc, w, h, img_w, img_h):
 def main(args):
 
     CLASS_MAP = {
-        0: "mass",
-        1: "Suspicious_Calcification"
+        0: "Mass",
+        1: "Suspicious Calcification"
     }
 
     os.makedirs(args.output_dir, exist_ok=True)
