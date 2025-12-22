@@ -1,34 +1,84 @@
 import os
 import shutil
 import re
+import argparse
 
-YOLO_CROP_DIR = "runs/detect/exp/crops"
-OUT_DIR = "cmcnet_patches"
+# --------------------------------------------------
+# Parse YOLO crop filename
+# Example:
+# fe61ad0161113db6541d2eb036a643ed_L_MLO_0.jpg
+# --------------------------------------------------
+def parse_crop_name(fname):
+    """
+    return: patient_id, side, view, idx
+    """
+    name = fname.replace(".jpg", "")
+    m = re.match(r"(.*)_([LR])_(CC|MLO)_(\d+)", name)
+    if not m:
+        return None
+    return m.group(1), m.group(2), m.group(3), m.group(4)
 
-os.makedirs(OUT_DIR, exist_ok=True)
 
-pattern = r"(.*)_([LR])_(CC|MLO)_(\d+)\.jpg"
+def prepare_cmcnet_patches(yolo_crop_dir, out_dir):
+    os.makedirs(out_dir, exist_ok=True)
 
-for cls in os.listdir(YOLO_CROP_DIR):
-    cls_dir = os.path.join(YOLO_CROP_DIR, cls)
-    if not os.path.isdir(cls_dir):
-        continue
+    classes = os.listdir(yolo_crop_dir)
+    total = 0
 
-    for fname in os.listdir(cls_dir):
-        m = re.match(pattern, fname)
-        if not m:
+    for cls in classes:
+        cls_dir = os.path.join(yolo_crop_dir, cls)
+        if not os.path.isdir(cls_dir):
             continue
 
-        patient, side, view, idx = m.groups()
-        pid = f"{patient}_{side}"
+        for fname in os.listdir(cls_dir):
+            if not fname.endswith(".jpg"):
+                continue
 
-        save_dir = os.path.join(OUT_DIR, pid)
-        os.makedirs(save_dir, exist_ok=True)
+            parsed = parse_crop_name(fname)
+            if parsed is None:
+                continue
 
-        src = os.path.join(cls_dir, fname)
-        dst = os.path.join(
-            save_dir,
-            f"{patient}_{side}_{view}_pred{idx}_yolo{idx}.png"
-        )
+            patient_id, side, view, idx = parsed
+            pid = f"{patient_id}_{side}"
 
-        shutil.copy(src, dst)
+            save_dir = os.path.join(out_dir, pid)
+            os.makedirs(save_dir, exist_ok=True)
+
+            src = os.path.join(cls_dir, fname)
+            dst = os.path.join(
+                save_dir,
+                f"{patient_id}_{side}_{view}_pred{idx}_yolo{idx}.png"
+            )
+
+            shutil.copy(src, dst)
+            total += 1
+
+    print(f"✅ Done. Copied {total} patches to {out_dir}")
+
+
+# --------------------------------------------------
+# CLI
+# --------------------------------------------------
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Prepare YOLO cropped patches for CMCNet inference"
+    )
+    parser.add_argument(
+        "--yolo-crop-dir",
+        type=str,
+        required=True,
+        help="Path to YOLO crops directory, e.g. runs/detect/exp/crops"
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=str,
+        default="cmcnet_patches",
+        help="Output directory for CMCNet inference"
+    )
+
+    args = parser.parse_args()
+
+    prepare_cmcnet_patches(
+        yolo_crop_dir=args.yolo_crop_dir,
+        out_dir=args.out_dir
+    )
