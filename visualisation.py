@@ -145,7 +145,7 @@ def main(args):
         )
 
         patient_id = row["CC_patch"].split("_")[0]
-
+        os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(
             args.out_dir,
             f"{idx:04d}_{patient_id}.png"
