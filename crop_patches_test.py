@@ -53,40 +53,37 @@ def main(args):
 
         class_counter = {0: 0, 1: 0}
 
-        for line in lines:
+        for line_idx, line in enumerate(lines):
             parts = line.split()
             if len(parts) < 5:
                 continue
-
+        
             cls, xc, yc, bw, bh = map(float, parts[:5])
             conf = float(parts[5]) if len(parts) > 5 else None
             cls = int(cls)
-
+        
             if cls not in CLASS_MAP:
                 continue
-
+        
             x1, y1, x2, y2 = yolo_to_xyxy(xc, yc, bw, bh, w, h)
             crop = img[y1:y2, x1:x2]
-
+        
             if crop.size == 0:
                 continue
-
-            idx = class_counter[cls]
-            class_counter[cls] += 1
-
+        
             class_name = CLASS_MAP[cls]
-
+        
             crop_dir  = os.path.join(args.output_dir, "crops", class_name)
             label_dir = os.path.join(args.output_dir, "labels", class_name)
-
+        
             os.makedirs(crop_dir, exist_ok=True)
             os.makedirs(label_dir, exist_ok=True)
-
-            crop_name  = f"{base}_{idx}.jpg"
-            label_name = f"{base}_{idx}.txt"
-
+        
+            crop_name  = f"{base}_{line_idx}.jpg"
+            label_name = f"{base}_{line_idx}.txt"
+        
             cv2.imwrite(os.path.join(crop_dir, crop_name), crop)
-
+        
             with open(os.path.join(label_dir, label_name), "w") as f:
                 f.write(line + "\n")
 
