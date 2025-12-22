@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """
-Crop YOLO hard negative patches only.
+Construct patch-level dataset.
 
-- Negative = YOLO predictions with IoU < threshold w.r.t GT
-- Top-K negatives per image (by confidence)
+Positive:
+- From GT boxes only
+- Random jitter around GT
+- IoU with GT > 0.5
+- Randomly sample top-K
+- Saved into Mass / Suspicious_Calcification
 
-Positive patches are assumed to be cropped separately from GT.
+Negative:
+- From YOLO predictions
+- IoU < threshold w.r.t all GT
+- Top-K by confidence
+- Saved into Negative
 """
 
 import argparse
+import random
 from pathlib import Path
 
 import cv2
@@ -17,88 +26,70 @@ from utils.metrics import box_iou
 
 
 # --------------------------------------------------
-# Argument parser
+# Args
 # --------------------------------------------------
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Crop YOLO hard negative patches only"
-    )
+    parser = argparse.ArgumentParser()
 
-    parser.add_argument("--images-dir", type=str, required=True,
-                        help="Directory containing original images")
-    parser.add_argument("--pred-dir", type=str, required=True,
-                        help="Directory containing YOLO prediction .txt files")
-    parser.add_argument("--gt-dir", type=str, required=True,
-                        help="Directory containing GT YOLO label .txt files")
-    parser.add_argument("--save-dir", type=str, required=True,
-                        help="Directory to save negative patches")
+    parser.add_argument("--images-dir", required=True)
+    parser.add_argument("--gt-dir", required=True)
+    parser.add_argument("--pred-dir", required=True)
+    parser.add_argument("--save-dir", required=True)
 
-    parser.add_argument("--iou-thr", type=float, default=0.5,
-                        help="IoU threshold for negative samples")
-    parser.add_argument("--topk", type=int, default=5,
-                        help="Max number of negatives per image")
-    parser.add_argument("--patch-size", type=int, default=128,
-                        help="Output patch size")
-    parser.add_argument("--img-ext", type=str, default=".png",
-                        help="Image extension")
+    parser.add_argument("--pos-topk", type=int, default=2)
+    parser.add_argument("--neg-topk", type=int, default=5)
+
+    parser.add_argument("--iou-thr", type=float, default=0.5)
+    parser.add_argument("--patch-size", type=int, default=128)
+    parser.add_argument("--img-ext", default=".png")
 
     return parser.parse_args()
 
 
 # --------------------------------------------------
-# Utilities
+# Utils
 # --------------------------------------------------
-def load_gt_boxes(label_path, img_shape):
-    """Load GT YOLO labels and convert to xyxy pixel format."""
-    if not label_path.exists():
-        return torch.empty((0, 4))
-
+def load_gt_boxes(gt_path, img_shape):
     h, w = img_shape[:2]
     boxes = []
 
-    with open(label_path, "r") as f:
-        for line in f:
-            parts = line.strip().split()
-            if len(parts) < 5:
-                continue
+    if not gt_path.exists():
+        return boxes
 
-            _, xc, yc, bw, bh = map(float, parts[:5])
+    with open(gt_path) as f:
+        for line in f:
+            cls, xc, yc, bw, bh = map(float, line.split())
             xc *= w; yc *= h
             bw *= w; bh *= h
-
             x1 = xc - bw / 2
             y1 = yc - bh / 2
             x2 = xc + bw / 2
             y2 = yc + bh / 2
+            boxes.append((int(cls), x1, y1, x2, y2))
 
-            boxes.append([x1, y1, x2, y2])
-
-    if len(boxes) == 0:
-        return torch.empty((0, 4))
-
-    return torch.tensor(boxes)
+    return boxes
 
 
-def crop_patch(img, xc, yc, bw, bh, out_size):
-    """Crop patch from image using normalized YOLO bbox."""
-    h, w = img.shape[:2]
+def jitter_box(x1, y1, x2, y2, img_w, img_h, scale=0.15):
+    w = x2 - x1
+    h = y2 - y1
 
-    xc *= w; yc *= h
-    bw *= w; bh *= h
+    dx = random.uniform(-scale, scale) * w
+    dy = random.uniform(-scale, scale) * h
 
-    x1 = int(xc - bw / 2)
-    y1 = int(yc - bh / 2)
-    x2 = int(xc + bw / 2)
-    y2 = int(yc + bh / 2)
+    nx1 = max(0, x1 + dx)
+    ny1 = max(0, y1 + dy)
+    nx2 = min(img_w, x2 + dx)
+    ny2 = min(img_h, y2 + dy)
 
-    x1 = max(0, x1); y1 = max(0, y1)
-    x2 = min(w, x2); y2 = min(h, y2)
+    return nx1, ny1, nx2, ny2
 
-    patch = img[y1:y2, x1:x2]
+
+def crop(img, x1, y1, x2, y2, size):
+    patch = img[int(y1):int(y2), int(x1):int(x2)]
     if patch.size == 0:
         return None
-
-    return cv2.resize(patch, (out_size, out_size))
+    return cv2.resize(patch, (size, size))
 
 
 # --------------------------------------------------
@@ -108,77 +99,89 @@ def main():
     args = parse_args()
 
     images_dir = Path(args.images_dir)
-    pred_dir = Path(args.pred_dir)
     gt_dir = Path(args.gt_dir)
+    pred_dir = Path(args.pred_dir)
     save_dir = Path(args.save_dir)
 
-    save_dir.mkdir(parents=True, exist_ok=True)
+    mass_dir = save_dir / "Mass"
+    calc_dir = save_dir / "Suspicious_Calcification"
+    neg_dir = save_dir / "Negative"
+    for d in [mass_dir, calc_dir, neg_dir]:
+        d.mkdir(parents=True, exist_ok=True)
 
-    pred_files = sorted(pred_dir.glob("*.txt"))
-    print(f"🔍 Found {len(pred_files)} YOLO prediction files")
-
-    for pred_path in pred_files:
-        image_id = pred_path.stem
+    for gt_path in gt_dir.glob("*.txt"):
+        image_id = gt_path.stem
         img_path = images_dir / f"{image_id}{args.img_ext}"
-        gt_path = gt_dir / f"{image_id}.txt"
 
         if not img_path.exists():
-            print(f"⚠ Missing image: {img_path}")
             continue
 
         img = cv2.imread(str(img_path))
-        if img is None:
-            print(f"⚠ Failed to read image: {img_path}")
-            continue
+        h, w = img.shape[:2]
 
         gt_boxes = load_gt_boxes(gt_path, img.shape)
 
-        neg_candidates = []
+        # -------------------------
+        # POSITIVE (from GT)
+        # -------------------------
+        pos_patches = []
 
-        # -------------------------------
-        # Parse YOLO predictions
-        # -------------------------------
-        with open(pred_path, "r") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) != 6:
-                    continue
+        for cls, x1, y1, x2, y2 in gt_boxes:
+            gt_tensor = torch.tensor([[x1, y1, x2, y2]])
 
-                _, xc, yc, bw, bh, conf = map(float, parts)
+            for _ in range(10):  # generate candidates
+                nx1, ny1, nx2, ny2 = jitter_box(x1, y1, x2, y2, w, h)
+                prop = torch.tensor([[nx1, ny1, nx2, ny2]])
+                iou = box_iou(prop, gt_tensor).item()
 
-                pred_xyxy = torch.tensor([[
-                    (xc - bw / 2) * img.shape[1],
-                    (yc - bh / 2) * img.shape[0],
-                    (xc + bw / 2) * img.shape[1],
-                    (yc + bh / 2) * img.shape[0],
-                ]])
+                if iou > args.iou_thr:
+                    pos_patches.append((cls, nx1, ny1, nx2, ny2))
 
-                iou = 0.0
-                if gt_boxes.numel() > 0:
-                    iou = box_iou(pred_xyxy, gt_boxes).max().item()
+        random.shuffle(pos_patches)
+        pos_patches = pos_patches[:args.pos_topk]
 
-                if iou < args.iou_thr:
-                    neg_candidates.append((conf, xc, yc, bw, bh))
-
-        if len(neg_candidates) == 0:
-            continue
-
-        # Top-K by confidence
-        neg_candidates.sort(key=lambda x: x[0], reverse=True)
-        neg_candidates = neg_candidates[:args.topk]
-
-        # Save negative patches
-        for idx, (conf, xc, yc, bw, bh) in enumerate(neg_candidates):
-            patch = crop_patch(img, xc, yc, bw, bh, args.patch_size)
+        for i, (cls, x1, y1, x2, y2) in enumerate(pos_patches):
+            patch = crop(img, x1, y1, x2, y2, args.patch_size)
             if patch is None:
                 continue
+            out_dir = mass_dir if cls == 0 else calc_dir
+            cv2.imwrite(str(out_dir / f"{image_id}_pos_{i}.png"), patch)
 
-            out_name = f"{image_id}_neg_{idx}.png"
-            cv2.imwrite(str(save_dir / out_name), patch)
+        # -------------------------
+        # NEGATIVE (from YOLO)
+        # -------------------------
+        neg_candidates = []
 
-        print(f"✔ {image_id}: {len(neg_candidates)} negatives saved")
+        pred_path = pred_dir / f"{image_id}.txt"
+        if pred_path.exists():
+            gt_xyxy = torch.tensor([[b[1], b[2], b[3], b[4]] for b in gt_boxes]) \
+                if gt_boxes else torch.empty((0, 4))
 
-    print("✅ Hard negative cropping finished.")
+            with open(pred_path) as f:
+                for line in f:
+                    _, xc, yc, bw, bh, conf = map(float, line.split())
+                    x1 = (xc - bw/2) * w
+                    y1 = (yc - bh/2) * h
+                    x2 = (xc + bw/2) * w
+                    y2 = (yc + bh/2) * h
+
+                    prop = torch.tensor([[x1, y1, x2, y2]])
+                    iou = box_iou(prop, gt_xyxy).max().item() if gt_xyxy.numel() else 0
+
+                    if iou < args.iou_thr:
+                        neg_candidates.append((conf, x1, y1, x2, y2))
+
+        neg_candidates.sort(reverse=True)
+        neg_candidates = neg_candidates[:args.neg_topk]
+
+        for i, (_, x1, y1, x2, y2) in enumerate(neg_candidates):
+            patch = crop(img, x1, y1, x2, y2, args.patch_size)
+            if patch is not None:
+                cv2.imwrite(str(neg_dir / f"{image_id}_neg_{i}.png"), patch)
+
+        print(f"✔ {image_id}: {len(pos_patches)} pos, {len(neg_candidates)} neg")
+
+    print("✅ Dataset construction finished.")
 
 
 if __name__ == "__main__":
