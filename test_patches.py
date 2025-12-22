@@ -12,7 +12,7 @@ def parse_crop_name(fname):
     """
     return: patient_id, side, view, idx
     """
-    name = fname.replace(".jpg", "")
+    name = fname.replace(".jpg", "").replace(".png", "")
     m = re.match(r"(.*)_([LR])_(CC|MLO)_(\d+)", name)
     if not m:
         return None
@@ -20,18 +20,26 @@ def parse_crop_name(fname):
 
 
 def prepare_cmcnet_patches(yolo_crop_dir, out_dir):
-    os.makedirs(out_dir, exist_ok=True)
+    """
+    out_dir/
+      ├── CC/pid_side/*.png
+      └── MLO/pid_side/*.png
+    """
+    cc_root  = os.path.join(out_dir, "CC")
+    mlo_root = os.path.join(out_dir, "MLO")
+    os.makedirs(cc_root, exist_ok=True)
+    os.makedirs(mlo_root, exist_ok=True)
 
-    classes = os.listdir(yolo_crop_dir)
     total = 0
 
-    for cls in classes:
+    # YOLO crops are grouped by class folders
+    for cls in os.listdir(yolo_crop_dir):
         cls_dir = os.path.join(yolo_crop_dir, cls)
         if not os.path.isdir(cls_dir):
             continue
 
         for fname in os.listdir(cls_dir):
-            if not fname.endswith(".jpg"):
+            if not (fname.endswith(".jpg") or fname.endswith(".png")):
                 continue
 
             parsed = parse_crop_name(fname)
@@ -41,7 +49,10 @@ def prepare_cmcnet_patches(yolo_crop_dir, out_dir):
             patient_id, side, view, idx = parsed
             pid = f"{patient_id}_{side}"
 
-            save_dir = os.path.join(out_dir, pid)
+            # choose CC / MLO root
+            root = cc_root if view == "CC" else mlo_root
+
+            save_dir = os.path.join(root, pid)
             os.makedirs(save_dir, exist_ok=True)
 
             src = os.path.join(cls_dir, fname)
@@ -53,7 +64,9 @@ def prepare_cmcnet_patches(yolo_crop_dir, out_dir):
             shutil.copy(src, dst)
             total += 1
 
-    print(f"✅ Done. Copied {total} patches to {out_dir}")
+    print(f"✅ Done. Copied {total} patches")
+    print(f"📂 CC patches  → {cc_root}")
+    print(f"📂 MLO patches → {mlo_root}")
 
 
 # --------------------------------------------------
@@ -72,7 +85,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--out-dir",
         type=str,
-        default="cmcnet_patches",
+        default="cmcnet_test_patches",
         help="Output directory for CMCNet inference"
     )
 
