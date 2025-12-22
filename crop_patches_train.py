@@ -179,9 +179,9 @@ def main():
             if patch is not None:
                 cv2.imwrite(str(neg_dir / f"{image_id}_neg_{i}.png"), patch)
 
-        print(f"✔ {image_id}: {len(pos_patches)} pos, {len(neg_candidates)} neg")
+        #print(f"{image_id}: {len(pos_patches)} pos, {len(neg_candidates)} neg")
 
-    print("✅ Dataset construction finished.")
+    print("Dataset construction finished.")
 
 
 if __name__ == "__main__":
