@@ -145,13 +145,23 @@ def main(args):
         )
 
         patient_id = row["CC_patch"].split("_")[0]
+
+        out_path = os.path.join(
+            args.out_dir,
+            f"{idx:04d}_{patient_id}.png"
+        )
+        
         plt.suptitle(
             f"Patient {patient_id} | Siamese distance = {row['distance']:.3f}",
             fontsize=14,
         )
-
+        
         plt.tight_layout()
-        plt.show()
+        plt.savefig(out_path, dpi=200)
+        plt.close()
+        
+        print(f"✅ Saved {out_path}")
+
 
 
 # ======================================================
